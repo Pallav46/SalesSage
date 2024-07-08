@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import classNames from "classnames";
 import { useTheme } from "../../ThemeContext";
@@ -22,10 +22,9 @@ const Signup = ({ onClose }) => {
 
   const handleOtpChange = (index, value) => {
     const newOtp = [...otp];
-    newOtp[index] = value.slice(-1); // Ensure only the last digit is taken
+    newOtp[index] = value.slice(-1);
     setOtp(newOtp);
 
-    // Move to next input box if a digit is entered
     if (value && index < 5) {
       otpRefs.current[index + 1].focus();
     }
@@ -33,7 +32,8 @@ const Signup = ({ onClose }) => {
 
   const handleNext = () => {
     if (step === 1) {
-      axios.post('http://127.0.0.1:8000/accounts/send-otp/', { email })
+      axios
+        .post("http://127.0.0.1:8000/accounts/send-otp/", { email })
         .then(() => {
           startTimer();
           setStep(step + 1);
@@ -46,6 +46,24 @@ const Signup = ({ onClose }) => {
     }
   };
 
+  const verifyOtp = () => {
+    const otpCode = otp.join("");
+    axios
+      .post("http://127.0.0.1:8000/accounts/verify-otp/", {
+        email,
+        otp: otpCode,
+      })
+      .then((response) => {
+        if (response.status === 201) {
+          setStep(step + 1);
+        } else {
+          console.error("OTP verification failed", response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error verifying OTP", error);
+      });
+  };
 
   const handlePrevious = () => {
     setStep(step - 1);
@@ -53,7 +71,23 @@ const Signup = ({ onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle final form submission logic here
+    axios
+      .post("http://127.0.0.1:8000/accounts/register/", {
+        email,
+        company_name: name,
+        company_id: username,
+        password
+      })
+      .then((response) => {
+        if (response.status === 201) {
+          console.log(response.data.message)
+        } else {
+          console.error("Register failed", response.data.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error verifying OTP", error);
+      });
   };
 
   const startTimer = () => {
@@ -78,12 +112,19 @@ const Signup = ({ onClose }) => {
 
   const checkUsernameAvailability = (username) => {
     axios
-      .get(`/api/check-username?username=${username}`)
+      .post(`http://127.0.0.1:8000/accounts/is-companyID-available/`, {
+        company_id: username,
+      })
       .then((response) => {
-        setUsernameAvailable(response.data.available);
+        if (response.status === 200 && response.data.message === 'Company_id is available') {
+          setUsernameAvailable(true);
+        } else {
+          setUsernameAvailable(false);
+        }
       })
       .catch((error) => {
         console.error("Error checking username availability", error);
+        setUsernameAvailable(false);
       });
   };
 
@@ -94,7 +135,7 @@ const Signup = ({ onClose }) => {
     }
     debounceTimeoutRef.current = setTimeout(() => {
       checkUsernameAvailability(e.target.value);
-    }, 500);
+    }, 1500);
   };
 
   useEffect(() => {
@@ -236,7 +277,7 @@ const Signup = ({ onClose }) => {
                 <button
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                   type="button"
-                  onClick={handleNext}
+                  onClick={verifyOtp}
                 >
                   Verify OTP
                 </button>
@@ -279,7 +320,7 @@ const Signup = ({ onClose }) => {
                   {usernameAvailable === true
                     ? "Username is available"
                     : usernameAvailable === false
-                    ? "Username is taken"
+                    ? "Username is not available"
                     : "Checking username availability..."}
                 </p>
               )}
@@ -400,4 +441,3 @@ const Signup = ({ onClose }) => {
 };
 
 export default Signup;
-

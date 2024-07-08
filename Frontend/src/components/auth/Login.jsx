@@ -1,43 +1,20 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { useTheme } from "../../ThemeContext";
-import debounce from "lodash/debounce";
-import { FaUser, FaLock, FaCheck, FaTimes } from "react-icons/fa";
+import { FaUser, FaLock, FaTimes } from "react-icons/fa";
 import Signup from "./Signup";
+import axios from "axios";
 
 const Login = ({ onClose }) => {
   const { isDarkMode } = useTheme();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [isUsernameValid, setIsUsernameValid] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-
-  const validateUsername = useCallback((value) => {
-    if (value.length < 3) {
-      setUsernameError("Username must be at least 3 characters long");
-      setIsUsernameValid(false);
-    } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-      setUsernameError(
-        "Username can only contain letters, numbers, and underscores"
-      );
-      setIsUsernameValid(false);
-    } else {
-      setUsernameError("");
-      setIsUsernameValid(true);
-    }
-  }, []);
-
-  const debouncedValidateUsername = useCallback(
-    debounce(validateUsername, 300),
-    [validateUsername]
-  );
+  const [loginError, setLoginError] = useState("");
 
   const handleUsernameChange = (e) => {
-    const value = e.target.value;
-    setUsername(value);
-    debouncedValidateUsername(value);
+    setUsername(e.target.value);
   };
 
   const handlePasswordChange = (e) => {
@@ -48,13 +25,29 @@ const Login = ({ onClose }) => {
     );
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!usernameError && !passwordError && username && password) {
-      console.log("Login submitted", { username, password, rememberMe });
-      // Handle login logic here
+    if (username && password && !passwordError) {
+      try {
+        const response = await axios.post("http://127.0.0.1:8000/accounts/login/", {
+          company_id: username,
+          password,
+          // remember_me: rememberMe,
+        });
+        
+        if (response.status === 200) {
+          console.log("Login successful", response.data);
+          // Handle successful login (e.g., store token, redirect)
+          onClose(); // Close the login modal
+        } else {
+          setLoginError("Login failed. Please check your credentials.");
+        }
+      } catch (error) {
+        console.error("Login error", error);
+        setLoginError("An error occurred during login. Please try again.");
+      }
     } else {
-      console.log("Form has errors or empty fields");
+      setLoginError("Please fill in all fields correctly.");
     }
   };
 
@@ -77,6 +70,9 @@ const Login = ({ onClose }) => {
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">
             Login
           </h2>
+          {loginError && (
+            <p className="text-red-500 text-sm mb-4 text-center">{loginError}</p>
+          )}
           <div className="mb-4">
             <label
               className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
@@ -89,24 +85,14 @@ const Login = ({ onClose }) => {
                 <FaUser className="text-gray-400" />
               </span>
               <input
-                className={`shadow appearance-none border rounded w-full py-2 px-3 pl-10 text-gray-700 dark:text-gray-300 dark:bg-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  usernameError ? "border-red-500" : ""
-                }`}
+                className="shadow appearance-none border rounded w-full py-2 px-3 pl-10 text-gray-700 dark:text-gray-300 dark:bg-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
                 id="username"
                 type="text"
                 placeholder="Username"
                 value={username}
                 onChange={handleUsernameChange}
               />
-              {isUsernameValid && (
-                <span className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <FaCheck className="text-green-500" />
-                </span>
-              )}
             </div>
-            {usernameError && (
-              <p className="text-red-500 text-xs italic mt-1">{usernameError}</p>
-            )}
           </div>
           <div className="mb-6">
             <label
