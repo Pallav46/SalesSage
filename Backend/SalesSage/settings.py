@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv # type: ignore
+load_dotenv('.env')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -124,21 +125,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-import mongoengine
-
-load_dotenv('.env')
-MONGODB_HOST = os.getenv('MONGODB_HOST')
-MONGODB_PORT = int(os.getenv('MONGODB_PORT'))
-MONGODB_NAME = os.getenv('MONGODB_NAME')
-SECRET_KEY = os.getenv('SECRET_KEY')
-
-# Connect to MongoDB
-mongoengine.connect(
-    db=MONGODB_NAME,
-    host=MONGODB_HOST,
-    port=MONGODB_PORT
-)
-
+#Dummy
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -161,3 +148,12 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM')
+
+MONGODB_HOST = os.getenv('MONGODB_HOST')
+MONGODB_PORT = int(os.getenv('MONGODB_PORT'))
+MONGODB_NAME = os.getenv('MONGODB_NAME')
+SECRET_KEY = os.getenv('SECRET_KEY')
+MONGODB_USER = os.getenv('MONGODB_USER')
+MONGODB_PASSWORD = os.getenv('MONGODB_PASSWORD')
+
+CONNECTION_STRING = f"mongodb+srv://{MONGODB_USER}:{MONGODB_PASSWORD}@{MONGODB_HOST}/{MONGODB_NAME}?retryWrites=true&w=majority"

@@ -12,8 +12,8 @@ from rest_framework.views import APIView
 
 from accounts.api.authentication import JWTAuthentication
 from .serializers import SalesSerializer
-from inventory.models import Sales
-client = MongoClient(settings.MONGODB_HOST, settings.MONGODB_PORT)
+
+client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 collection = db['inventory_items']
 

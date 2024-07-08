@@ -8,7 +8,7 @@ from pymongo import MongoClient
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
-client = MongoClient(settings.MONGODB_HOST, settings.MONGODB_PORT)
+client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 users_collection = db['company_user']
 

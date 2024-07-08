@@ -16,7 +16,7 @@ from pymongo import MongoClient
 from accounts.api.authentication import JWTAuthentication
 from .utils import generate_otp, send_otp_email
 
-client = MongoClient(settings.MONGODB_HOST, settings.MONGODB_PORT)
+client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 users_collection = db['company_user']
 otp_collection = db['otp_records']
