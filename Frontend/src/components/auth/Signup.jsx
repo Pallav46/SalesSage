@@ -33,10 +33,19 @@ const Signup = ({ onClose }) => {
 
   const handleNext = () => {
     if (step === 1) {
-      startTimer();
+      axios.post('http://127.0.0.1:8000/accounts/send-otp/', { email })
+        .then(() => {
+          startTimer();
+          setStep(step + 1);
+        })
+        .catch((error) => {
+          console.error("Error sending OTP", error);
+        });
+    } else {
+      setStep(step + 1);
     }
-    setStep(step + 1);
   };
+
 
   const handlePrevious = () => {
     setStep(step - 1);
