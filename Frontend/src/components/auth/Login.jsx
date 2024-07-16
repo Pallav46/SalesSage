@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTheme } from "../../ThemeContext";
-import { FaUser, FaLock, FaTimes } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
 import Signup from "./Signup";
 import axios from "axios";
 
@@ -34,7 +34,7 @@ const Login = ({ onClose }) => {
           password,
           // remember_me: rememberMe,
         });
-        
+
         if (response.status === 200) {
           console.log("Login successful", response.data);
           // Handle successful login (e.g., store token, redirect)
@@ -52,109 +52,101 @@ const Login = ({ onClose }) => {
   };
 
   return (
-    <div className={`w-full max-w-md ${isDarkMode ? "dark" : ""}`}>
-      {showSignup ? (
-        <Signup onClose={() => setShowSignup(false)} />
-      ) : (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white dark:bg-gray-800 shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 relative"
-        >
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute top-2 right-2 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100"
+    <div
+      className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? "dark" : ""}`}
+    >
+      <div
+        className={`w-full max-w-sm z-50 ${isDarkMode ? "dark" : ""}`}
+      >
+        {showSignup ? (
+          <Signup onClose={() => setShowSignup(false)} />
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className={`bg-[#020024]-400 dark:bg-gray-800 shadow-md rounded-3xl px-8 pt-8 pb-10 mb-4 relative border-4 border-white backdrop-blur-sm ${
+              isDarkMode ? "dark" : ""
+            }`}
           >
-            <FaTimes size={20} />
-          </button>
-          <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-            Login
-          </h2>
-          {loginError && (
-            <p className="text-red-500 text-sm mb-4 text-center">{loginError}</p>
-          )}
-          <div className="mb-4">
-            <label
-              className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
-              htmlFor="username"
-            >
-              Username
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <FaUser className="text-gray-400" />
-              </span>
-              <input
-                className="shadow appearance-none border rounded w-full py-2 px-3 pl-10 text-gray-700 dark:text-gray-300 dark:bg-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                id="username"
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={handleUsernameChange}
-              />
-            </div>
-          </div>
-          <div className="mb-6">
-            <label
-              className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
-              htmlFor="password"
-            >
-              Password
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <FaLock className="text-gray-400" />
-              </span>
-              <input
-                className={`shadow appearance-none border rounded w-full py-2 px-3 pl-10 text-gray-700 dark:text-gray-300 dark:bg-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  passwordError ? "border-red-500" : ""
-                }`}
-                id="password"
-                type="password"
-                placeholder="******************"
-                value={password}
-                onChange={handlePasswordChange}
-              />
-            </div>
-            {passwordError && (
-              <p className="text-red-500 text-xs italic mt-1">{passwordError}</p>
-            )}
-          </div>
-          <div className="mb-6 flex items-center">
-            <input
-              type="checkbox"
-              id="rememberMe"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="mr-2"
-            />
-            <label
-              htmlFor="rememberMe"
-              className="text-sm text-gray-700 dark:text-gray-300"
-            >
-              Remember me
-            </label>
-          </div>
-          <div className="flex items-center justify-between">
             <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
+              type="button"
+              onClick={onClose} // Close the modal when the cross button is clicked
+              className="absolute top-2 right-2 text-white-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-gray-100"
+            >
+              <FaTimes size={20} />
+            </button>
+            <h2 className="text-2xl font-bold mb-6 text-center text-white-400 dark:text-white">
+              Login
+            </h2>
+            {loginError && (
+              <p className="text-red-500 text-sm mb-4 text-center">{loginError}</p>
+            )}
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  id="username"
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={handleUsernameChange}
+                />
+              </div>
+            </div>
+            <div className="mb-6">
+              <div className="relative">
+                <input
+                  className={`shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    passwordError ? "border-red-500" : ""
+                  }`}
+                  id="password"
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                />
+              </div>
+              {passwordError && (
+                <p className="text-red-500 text-xs italic mt-1">{passwordError}</p>
+              )}
+            </div>
+            <div className="mb-6 flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="mr-2"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="text-sm text-white-700 dark:text-gray-300"
+              >
+                Remember me
+              </label>
+            </div>
+            <button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
               type="submit"
             >
               Sign In
             </button>
-            <a
-              href="#"
-              className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 transition duration-300 ease-in-out"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowSignup(true);
-              }}
-            >
-              Sign Up
-            </a>
-          </div>
-        </form>
-      )}
+            <br />
+            <p className="text-sm text-center text-white-400 dark:text-gray-300 mt-4">
+              New here?{" "}
+              <a
+                href="#"
+                className="font-bold text-blue-500 hover:text-blue-800 transition duration-300 ease-in-out"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowSignup(true);
+                }}
+              >
+                Register
+              </a>
+            </p>
+          </form>
+        )}
+      </div>
     </div>
   );
 };
