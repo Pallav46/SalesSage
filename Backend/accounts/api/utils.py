@@ -2,6 +2,11 @@ import random
 from django.core.mail import send_mail
 from django.conf import settings
 
+from datetime import datetime, timedelta
+import pytz
+
+import jwt
+
 def generate_otp():
     return str(random.randint(100000, 999999))
 
@@ -15,3 +20,21 @@ def send_otp_email(email, otp):
         [email],
         fail_silently=False,
     )
+
+def generate_access_token(user):
+    access_token_payload = {
+        'company_id': user['company_id'],
+        'exp': datetime.now(pytz.UTC) + timedelta(hours=1),
+        'iat': datetime.now(pytz.UTC)
+    }
+    access_token = jwt.encode(access_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return access_token
+
+def generate_refresh_token(user):
+    refresh_token_payload = {
+        'company_id': user['company_id'],
+        'exp': datetime.now(pytz.UTC) + timedelta(days=7),
+        'iat': datetime.now(pytz.UTC)
+    }
+    refresh_token = jwt.encode(refresh_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return refresh_token

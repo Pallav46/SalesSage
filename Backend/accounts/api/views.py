@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from pymongo import MongoClient
 
 from accounts.api.authentication import JWTAuthentication
-from .utils import generate_otp, send_otp_email
+from .utils import generate_otp, send_otp_email, generate_access_token, generate_refresh_token
 
 client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
@@ -108,41 +108,32 @@ class RegisterCompany(APIView):
         db.create_collection(item_collection_name)
         db.create_collection(sales_collection_name)
 
-        return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
+        user = users_collection.find_one({'company_id': company_id})
+        access_token = generate_access_token(user)
+        refresh_token = generate_refresh_token(user)
+
+        return Response({
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        }, status=status.HTTP_201_CREATED)
 
 class LoginView(APIView):
     def post(self, request):
         data = request.data
         user = users_collection.find_one({'company_id': data.get('company_id')})
         if user and check_password(data.get('password'), user['password']):
-            access_token = self.generate_access_token(user)
-            refresh_token = self.generate_refresh_token(user)
+            access_token = generate_access_token(user)
+            refresh_token = generate_refresh_token(user)
             
             return Response({
                 'access_token': access_token,
                 'refresh_token': refresh_token
             }, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    def generate_access_token(self, user):
-        access_token_payload = {
-            'company_id': user['company_id'],
-            'exp': datetime.now(pytz.UTC) + timedelta(hours=1),
-            'iat': datetime.now(pytz.UTC)
-        }
-        access_token = jwt.encode(access_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-        return access_token
-
-    def generate_refresh_token(self, user):
-        refresh_token_payload = {
-            'company_id': user['company_id'],
-            'exp': datetime.now(pytz.UTC) + timedelta(days=7),
-            'iat': datetime.now(pytz.UTC)
-        }
-        refresh_token = jwt.encode(refresh_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-        return refresh_token
     
 class RefreshTokenView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         refresh_token = request.data.get('refresh_token')
         if refresh_token is None:
@@ -156,17 +147,8 @@ class RefreshTokenView(APIView):
         if user is None:
             return Response({'error': 'Company not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        access_token = self.generate_access_token(user)
+        access_token = generate_access_token(user)
         return Response({'access_token': access_token})
-
-    def generate_access_token(self, user):
-        access_token_payload = {
-            'company_id': user['company_id'],
-            'exp': datetime.now(pytz.UTC) + timedelta(hours=1),
-            'iat': datetime.now(pytz.UTC)
-        }
-        access_token = jwt.encode(access_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-        return access_token
     
 class LogoutView(APIView):
     authentication_classes = [JWTAuthentication]
