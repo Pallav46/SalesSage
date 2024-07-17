@@ -69,10 +69,14 @@ class VerifyOTP(APIView):
             return Response({"error": "Invalid OTP or OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
         
 class CompanyIDAvailable(APIView):
-    def post(self, request):
-        company_id = request.data.get('company_id')
+    def get(self, request):
+        company_id = request.query_params.get('company_id')
+        if not company_id:
+            return Response({'error': 'Company_id parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
         if users_collection.find_one({'company_id': company_id}):
             return Response({'error': 'Company_id is not available'}, status=status.HTTP_409_CONFLICT)
+        
         return Response({'message': 'Company_id is available'}, status=status.HTTP_200_OK)
 
 class RegisterCompany(APIView):
@@ -92,6 +96,9 @@ class RegisterCompany(APIView):
 
         if users_collection.find_one({'company_id': company_id}):
             return Response({"error": "Company ID already taken"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(password) < 8 or not any(char in '!@#$%^&*()_+' for char in password):
+            return Response({"error": "Password should be at least 8 characters long including special characters"}, status=status.HTTP_400_BAD_REQUEST)
 
         users_collection.update_one(
             {'email': email},
