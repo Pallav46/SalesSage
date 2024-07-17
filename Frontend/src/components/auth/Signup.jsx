@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { FaTimes } from "react-icons/fa";
+import {
+  FaTimes,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaSpinner,
+} from "react-icons/fa";
 import classNames from "classnames";
 import { useTheme } from "../../ThemeContext";
 import axios from "axios";
@@ -10,15 +15,19 @@ const Signup = ({ onClose }) => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(Array(6).fill(""));
   const otpRefs = useRef([]);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [username, setUsername] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [companyId, setCompanyId] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [timer, setTimer] = useState(30);
   const [resendEnabled, setResendEnabled] = useState(false);
   const debounceTimeoutRef = useRef(null);
+
+  const [emailError, setEmailError] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [registerError, setRegisterError] = useState("");
+  const [companyIdError, setCompanyIdError] = useState("");
 
   const handleOtpChange = (index, value) => {
     const newOtp = [...otp];
@@ -37,9 +46,10 @@ const Signup = ({ onClose }) => {
         .then(() => {
           startTimer();
           setStep(step + 1);
+          setEmailError(""); // Clear previous error
         })
         .catch((error) => {
-          console.error("Error sending OTP", error);
+          setEmailError(error.response.data.error);
         });
     } else {
       setStep(step + 1);
@@ -56,12 +66,13 @@ const Signup = ({ onClose }) => {
       .then((response) => {
         if (response.status === 201) {
           setStep(step + 1);
+          setOtpError(""); // Clear previous error
         } else {
-          console.error("OTP verification failed", response.data.message);
+          setOtpError(response.data.message);
         }
       })
       .catch((error) => {
-        console.error("Error verifying OTP", error);
+        setOtpError("Error verifying OTP");
       });
   };
 
@@ -72,25 +83,26 @@ const Signup = ({ onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      console.error("Passwords do not match");
+      setRegisterError("Passwords do not match");
       return;
     }
     axios
       .post("http://127.0.0.1:8000/accounts/register/", {
         email,
-        company_name: name,
-        company_id: username,
-        password
+        company_name: companyName,
+        company_id: companyId,
+        password,
       })
       .then((response) => {
         if (response.status === 201) {
           console.log(response.data.message);
+          setRegisterError(""); // Clear previous error
         } else {
-          console.error("Register failed", response.data.error);
+          setRegisterError(response.data.error);
         }
       })
       .catch((error) => {
-        console.error("Error registering", error);
+        setRegisterError("Error registering");
       });
   };
 
@@ -111,37 +123,37 @@ const Signup = ({ onClose }) => {
 
   const handleResendOtp = () => {
     startTimer();
-    // Handle resend OTP logic here
     axios
       .post("http://127.0.0.1:8000/accounts/send-otp/", { email })
       .then(() => {
         startTimer();
       })
       .catch((error) => {
-        console.error("Error resending OTP", error);
+        setOtpError("Error resending OTP");
       });
   };
 
-  const checkUsernameAvailability = (username) => {
+  const checkUsernameAvailability = (companyId) => {
     axios
-      .post(`http://127.0.0.1:8000/accounts/is-companyID-available/`, {
-        company_id: username,
-      })
+      .get(`http://127.0.0.1:8000/accounts/id-available?company_id=${companyId}`)
       .then((response) => {
-        if (response.status === 200 && response.data.message === 'Company_id is available') {
+        if (response.status === 200 && response.data.available) {
           setUsernameAvailable(true);
+          setCompanyIdError(""); // Clear previous error
         } else {
           setUsernameAvailable(false);
+          setCompanyIdError(response.data.message);
         }
       })
       .catch((error) => {
-        console.error("Error checking username availability", error);
         setUsernameAvailable(false);
+        setCompanyIdError("Error checking company ID availability");
       });
   };
 
-  const handleUsernameChange = (e) => {
-    setUsername(e.target.value);
+  const handleCompanyIdChange = (e) => {
+    setCompanyId(e.target.value);
+    setUsernameAvailable(null); // Trigger spinner
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
@@ -160,15 +172,15 @@ const Signup = ({ onClose }) => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? "dark" : ""}`}
+      className={`fixed inset-0 flex items-center justify-center ${
+        isDarkMode ? "dark" : ""
+      }`}
     >
-      <div
-        className={`w-full max-w-sm ${isDarkMode ? "dark" : ""}`}
-      >
+      <div className={`w-full max-w-sm ${isDarkMode ? "dark" : ""}`}>
         <form
           className={classNames(
             "bg-[#020024]-400 dark:bg-gray-800 shadow-md rounded-3xl px-8 pt-8 pb-10 mb-4 relative border-4 border-white backdrop-blur-sm",
-            { "dark": isDarkMode }
+            { dark: isDarkMode }
           )}
         >
           <button
@@ -176,7 +188,7 @@ const Signup = ({ onClose }) => {
             onClick={onClose}
             className={classNames(
               "absolute top-2 right-2 text-white-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-gray-100",
-              { "dark": isDarkMode }
+              { dark: isDarkMode }
             )}
           >
             <FaTimes size={20} />
@@ -184,7 +196,7 @@ const Signup = ({ onClose }) => {
           <h2
             className={classNames("text-2xl font-bold mb-6 text-center", {
               "text-white": isDarkMode,
-              "text-gray-800": isDarkMode,
+              "text-gray-800": !isDarkMode,
             })}
           >
             Sign Up
@@ -207,7 +219,6 @@ const Signup = ({ onClose }) => {
             </div>
             {step === 1 && (
               <div>
-                
                 <input
                   className={classNames(
                     "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500",
@@ -222,6 +233,9 @@ const Signup = ({ onClose }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
+                {emailError && (
+                  <p className="text-red-500 text-xs mt-2">{emailError}</p>
+                )}
                 <button
                   className="bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out mt-4"
                   type="button"
@@ -229,140 +243,123 @@ const Signup = ({ onClose }) => {
                 >
                   Verify Email
                 </button>
-                
               </div>
             )}
             {step === 2 && (
               <div>
-                <label
-                  className={classNames("block text-sm font-bold mb-2", {
-                    "text-gray-700": !isDarkMode,
-                    "text-gray-300": isDarkMode,
-                  })}
-                  htmlFor="otp"
-                >
-                  OTP
-                </label>
-                <div className="flex justify-between mb-4">
-                  {otp.map((value, index) => (
+                <div className="flex justify-center mb-4">
+                  {otp.map((digit, index) => (
                     <input
                       key={index}
-                      type="text"
-                      value={value}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
                       ref={(el) => (otpRefs.current[index] = el)}
-                      className="w-10 h-10 text-center border-2 rounded-lg dark:bg-gray-600 text-gray-700 dark:text-gray-300"
+                      type="text"
+                      maxLength="1"
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      className={classNames(
+                        "w-10 h-10 m-1 text-center border rounded focus:outline-none focus:ring-2 focus:ring-blue-500",
+                        {
+                          "text-gray-700": !isDarkMode,
+                          "text-gray-300 dark:bg-gray-600": isDarkMode,
+                        }
+                      )}
                     />
                   ))}
                 </div>
-                <button
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out mt-4"
-                  type="button"
-                  onClick={verifyOtp}
-                >
-                  Verify OTP
-                </button>
-                {resendEnabled ? (
+                {otpError && (
+                  <p className="text-red-500 text-xs mt-2">{otpError}</p>
+                )}
+                <div className="flex justify-between">
                   <button
-                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out mt-4"
+                    className="bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
                     type="button"
-                    onClick={handleResendOtp}
+                    onClick={handlePrevious}
                   >
-                    Resend OTP
+                    Previous
                   </button>
-                ) : (
-                  <p className="text-gray-600 mt-4">
-                    Resend OTP in {timer} seconds
+                  <button
+                    className="bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
+                    type="button"
+                    onClick={verifyOtp}
+                  >
+                    Verify OTP
+                  </button>
+                </div>
+                <div className="flex justify-center items-center mt-4">
+                  <p className="text-sm">
+                    Resend OTP in{" "}
+                    <span className="font-semibold">{timer}</span> seconds
                   </p>
+                </div>
+                {resendEnabled && (
+                  <div className="flex justify-center">
+                    <button
+                      className="text-sm text-blue-500 hover:underline"
+                      onClick={handleResendOtp}
+                      disabled={!resendEnabled}
+                    >
+                      Resend OTP
+                    </button>
+                  </div>
                 )}
               </div>
             )}
             {step === 3 && (
               <div>
-                <label
-                  className={classNames("block text-sm font-bold mb-2", {
-                    "text-gray-700": !isDarkMode,
-                    "text-gray-300": isDarkMode,
-                  })}
-                  htmlFor="name"
-                >
-                  Company Name
-                </label>
                 <input
                   className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500",
+                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4",
                     {
                       "text-gray-700": !isDarkMode,
                       "text-gray-300 dark:bg-gray-600": isDarkMode,
                     }
                   )}
-                  id="name"
+                  id="companyName"
                   type="text"
                   placeholder="Company Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
                 />
-                <label
-                  className={classNames("block text-sm font-bold mb-2 mt-4", {
-                    "text-gray-700": !isDarkMode,
-                    "text-gray-300": isDarkMode,
-                  })}
-                  htmlFor="phone"
-                >
-                  Phone Number
-                </label>
-                <input
-                  className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500",
-                    {
-                      "text-gray-700": !isDarkMode,
-                      "text-gray-300 dark:bg-gray-600": isDarkMode,
-                    }
+                <div className="relative">
+                  <input
+                    className={classNames(
+                      "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4",
+                      {
+                        "text-gray-700": !isDarkMode,
+                        "text-gray-300 dark:bg-gray-600": isDarkMode,
+                      }
+                    )}
+                    id="companyId"
+                    type="text"
+                    placeholder="Company ID"
+                    value={companyId}
+                    onChange={handleCompanyIdChange}
+                  />
+                  {usernameAvailable === null && (
+                    <FaSpinner
+                      className="absolute right-3 top-3 text-gray-500 animate-spin"
+                      size={20}
+                    />
                   )}
-                  id="phone"
-                  type="text"
-                  placeholder="Phone Number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-                <label
-                  className={classNames("block text-sm font-bold mb-2 mt-4", {
-                    "text-gray-700": !isDarkMode,
-                    "text-gray-300": isDarkMode,
-                  })}
-                  htmlFor="username"
-                >
-                  Username
-                </label>
-                <input
-                  className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500",
-                    {
-                      "text-gray-700": !isDarkMode,
-                      "text-gray-300 dark:bg-gray-600": isDarkMode,
-                    }
+                  {usernameAvailable === true && (
+                    <FaCheckCircle
+                      className="absolute right-3 top-3 text-green-500"
+                      size={20}
+                    />
                   )}
-                  id="username"
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={handleUsernameChange}
-                />
-                {usernameAvailable === false && (
-                  <p className="text-red-600">Username is already taken.</p>
+                  {usernameAvailable === false && (
+                    <FaTimesCircle
+                      className="absolute right-3 top-3 text-red-500"
+                      size={20}
+                    />
+                  )}
+                </div>
+                {companyIdError && (
+                  <p className="text-red-500 text-xs mt-2">{companyIdError}</p>
                 )}
-                <label
-                  className={classNames("block text-sm font-bold mb-2 mt-4", {
-                    "text-gray-700": !isDarkMode,
-                    "text-gray-300": isDarkMode,
-                  })}
-                  htmlFor="password"
-                >
-                  Password
-                </label>
                 <input
                   className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500",
+                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4",
                     {
                       "text-gray-700": !isDarkMode,
                       "text-gray-300 dark:bg-gray-600": isDarkMode,
@@ -374,18 +371,9 @@ const Signup = ({ onClose }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <label
-                  className={classNames("block text-sm font-bold mb-2 mt-4", {
-                    "text-gray-700": !isDarkMode,
-                    "text-gray-300": isDarkMode,
-                  })}
-                  htmlFor="confirmPassword"
-                >
-                  Confirm Password
-                </label>
                 <input
                   className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500",
+                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4",
                     {
                       "text-gray-700": !isDarkMode,
                       "text-gray-300 dark:bg-gray-600": isDarkMode,
@@ -397,27 +385,27 @@ const Signup = ({ onClose }) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
-                <button
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out mt-4"
-                  type="submit"
-                  onClick={handleSubmit}
-                >
-                  Submit
-                </button>
+                {registerError && (
+                  <p className="text-red-500 text-xs mt-2">{registerError}</p>
+                )}
+                <div className="flex justify-between">
+                  <button
+                    className="bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
+                    type="button"
+                    onClick={handlePrevious}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    className="bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
+                    type="submit"
+                    onClick={handleSubmit}
+                  >
+                    Register
+                  </button>
+                </div>
               </div>
             )}
-          </div>
-          <div className="flex justify-between mt-4">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={handlePrevious}
-                className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
-              >
-                Back
-              </button>
-            )}
-            
           </div>
         </form>
       </div>

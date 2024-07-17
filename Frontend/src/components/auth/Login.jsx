@@ -63,7 +63,7 @@ const Login = ({ onClose }) => {
         ) : (
           <form
             onSubmit={handleSubmit}
-            className={`bg-[#020024]-400 dark:bg-gray-800 shadow-md rounded-3xl px-8 pt-8 pb-10 mb-4 relative border-4 border-white backdrop-blur-sm ${
+            className={`bg-[#020024]-400 dark:bg-gray-800 shadow-md rounded-3xl px-8 pt-8 pb-10 mb-4 relative border-4 border-white backdrop-blur-lg ${
               isDarkMode ? "dark" : ""
             }`}
           >
