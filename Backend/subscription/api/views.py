@@ -24,19 +24,15 @@ class PurchaseSubscriptionView(APIView):
 
     def post(self, request):
         user = request.user
-        tier = request.query_params.get('tier')
+        tier = request.data.get('tier')
 
-        try:
-            tier = int(tier)
-            if tier not in [2, 3]:
-                raise ValueError
-        except (TypeError, ValueError):
+        if not tier or tier not in [2,3]:
             return Response({'error': 'Invalid Tier'}, status=status.HTTP_400_BAD_REQUEST)
         
         if tier == 2:
-            amount = 100  # ₹1
+            amount = 100
         elif tier == 3:
-            amount = 200  # ₹2
+            amount = 200
 
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         data = {
