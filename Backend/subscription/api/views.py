@@ -48,6 +48,7 @@ class PurchaseSubscriptionView(APIView):
         order = client.order.create(data=data)
 
         return Response({
+            "key": settings.RAZORPAY_KEY_ID,
             "order_id": order['id'],
             "amount": order['amount'],
             "currency": order['currency'],
