@@ -106,7 +106,8 @@ class RegisterCompany(APIView):
                 'company_name': company_name,
                 'company_id': company_id,
                 'password': make_password(password),
-                'created_at': datetime.now(pytz.UTC)
+                'created_at': datetime.now(pytz.UTC),
+                'tier': 1
             }}
         )
 
