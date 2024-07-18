@@ -3,6 +3,7 @@ import { useTheme } from "../../ThemeContext";
 import { FaTimes } from "react-icons/fa";
 import Signup from "./Signup";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const Login = ({ onClose }) => {
   const { isDarkMode } = useTheme();
@@ -34,10 +35,14 @@ const Login = ({ onClose }) => {
           password,
           // remember_me: rememberMe,
         });
-
+  
         if (response.status === 200) {
           console.log("Login successful", response.data);
-          // Handle successful login (e.g., store token, redirect)
+  
+          Cookies.set("accessToken", response.data.access_token, { secure: true, sameSite: 'Strict' });
+          Cookies.set("refreshToken", response.data.refresh_token, { secure: true, sameSite: 'Strict' });
+  
+          // Handle successful login (e.g., redirect)
           onClose(); // Close the login modal
         } else {
           setLoginError("Login failed. Please check your credentials.");
