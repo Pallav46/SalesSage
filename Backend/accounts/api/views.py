@@ -181,3 +181,14 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         return Response({"success": "Successfully logged out."}, status=status.HTTP_200_OK)
+
+class UserView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user.__dict__
+        fields_to_remove = ['_id', 'password', 'created_at']
+        for field in fields_to_remove:
+            user.pop(field, None)
+        return Response(user, status=status.HTTP_200_OK)
