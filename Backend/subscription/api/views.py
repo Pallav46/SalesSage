@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import pytz
-import razorpay 
+import razorpay #type: ignore
 from pymongo import MongoClient
 
 from django.conf import settings
@@ -60,12 +60,10 @@ class PaymentCallbackView(APIView):
         razorpay_order_id = request.POST.get('razorpay_order_id')
         razorpay_signature = request.POST.get('razorpay_signature')
 
-        # Fetch order details from Razorpay to get the receipt
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         order = client.order.fetch(razorpay_order_id)
         receipt = order['receipt']
 
-        # Extract company_id from receipt
         company_id = receipt.split('_')[-2]
         tier = receipt.split('_')[-1]
         params_dict = {
