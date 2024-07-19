@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler # type: ignore
 
 class DataPreprocessing:
     def handle_missing_values(self, data: pd.DataFrame, threshold: int = 10):

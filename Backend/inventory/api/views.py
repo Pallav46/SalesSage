@@ -13,6 +13,8 @@ from rest_framework.views import APIView
 from accounts.api.authentication import JWTAuthentication
 from .serializers import SalesSerializer
 
+from inventory.api.ML.dataPreprocessing import DataPreprocessing
+import pandas as pd
 client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 collection = db['inventory_items']
@@ -38,23 +40,28 @@ class SalesUploadView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, format=None):
         file = request.FILES['file']
-        data = csv.DictReader(file.read().decode('utf-8').splitlines())
+
+        if not file.name.endswith('.csv'):
+            return Response({"error": "File format not supported. Please upload a CSV file."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            data = pd.read_csv(file)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
         
+        data_preprocessor = DataPreprocessing()
+        processed_data = data_preprocessor.process_data(data, normalize=False)
+
+        data_dict = processed_data.to_dict('records')
+
         salesCollection = db[f"{request.user.company_id}_sales"]
+
+        try:
+            salesCollection.insert_many(data_dict)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        for row in data:
-            date_str = row['date']
-            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-            
-            salesCollection.insert_one({
-                'date': date_obj,
-                'product_id': row['product_id'],
-                'sales_quantity': int(row['sales_quantity']),
-                'price_per_unit': float(row['price_per_unit']),
-                'cost_per_unit': float(row['cost_per_unit'])
-            })
-        
-        return Response({"message": "CSV data uploaded successfully"}, status=status.HTTP_201_CREATED)
+        return Response({"message": "File processed and data stored successfully."}, status=status.HTTP_200_OK)
     
 class SalesListView(APIView):
     authentication_classes = [JWTAuthentication]

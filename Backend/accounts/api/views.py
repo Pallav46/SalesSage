@@ -106,7 +106,7 @@ class RegisterCompany(APIView):
                 'company_name': company_name,
                 'company_id': company_id,
                 'password': make_password(password),
-                'created_at': datetime.now(pytz.UTC),
+                'created_at': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30),
                 'tier': 1
             }}
         )
@@ -120,9 +120,14 @@ class RegisterCompany(APIView):
         access_token = generate_access_token(user)
         refresh_token = generate_refresh_token(user)
 
+        fields_to_remove = ['_id', 'password', 'email', 'created_at']
+        for field in fields_to_remove:
+            user.pop(field, None)
+
         return Response({
             'access_token': access_token,
-            'refresh_token': refresh_token
+            'refresh_token': refresh_token,
+            'user': user
         }, status=status.HTTP_201_CREATED)
 
 class LoginView(APIView):
@@ -132,10 +137,15 @@ class LoginView(APIView):
         if user and check_password(data.get('password'), user['password']):
             access_token = generate_access_token(user)
             refresh_token = generate_refresh_token(user)
+
+            fields_to_remove = ['_id', 'password', 'email', 'created_at']
+            for field in fields_to_remove:
+                user.pop(field, None)
             
             return Response({
                 'access_token': access_token,
-                'refresh_token': refresh_token
+                'refresh_token': refresh_token,
+                'user': user
             }, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
     
@@ -156,7 +166,15 @@ class RefreshTokenView(APIView):
             return Response({'error': 'Company not found'}, status=status.HTTP_404_NOT_FOUND)
         
         access_token = generate_access_token(user)
-        return Response({'access_token': access_token})
+
+        fields_to_remove = ['_id', 'password', 'email', 'created_at']
+        for field in fields_to_remove:
+            user.pop(field, None)
+            
+        return Response({
+            'access_token': access_token,
+            'user': user
+            }, status=status.HTTP_200_OK)
     
 class LogoutView(APIView):
     authentication_classes = [JWTAuthentication]
