@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import pytz
-import razorpay  # type: ignore
+import razorpay 
 from pymongo import MongoClient
 
 from django.conf import settings
@@ -41,7 +41,7 @@ class PurchaseSubscriptionView(APIView):
         data = {
             "amount": amount,
             "currency": "INR",
-            "receipt": f"receipt_{user.company_id}",
+            "receipt": f"receipt_{user.company_id}_{tier}",
             "payment_capture": 1
         }
         order = client.order.create(data=data)
@@ -59,9 +59,15 @@ class PaymentCallbackView(APIView):
         razorpay_payment_id = request.POST.get('razorpay_payment_id')
         razorpay_order_id = request.POST.get('razorpay_order_id')
         razorpay_signature = request.POST.get('razorpay_signature')
-        
-        company_id = request.user.company_id
 
+        # Fetch order details from Razorpay to get the receipt
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        order = client.order.fetch(razorpay_order_id)
+        receipt = order['receipt']
+
+        # Extract company_id from receipt
+        company_id = receipt.split('_')[-2]
+        tier = receipt.split('_')[-1]
         params_dict = {
             'razorpay_order_id': razorpay_order_id,
             'razorpay_payment_id': razorpay_payment_id,
@@ -74,22 +80,20 @@ class PaymentCallbackView(APIView):
         ).hexdigest()
 
         if generated_signature == razorpay_signature:
-
             payment_data = {
                 'company_id': company_id,
                 'payment_time': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30),
                 'payment_id': razorpay_payment_id,
                 'order_id': razorpay_order_id,
                 'signature': razorpay_signature
-
             }
             payments_collection.insert_one(payment_data)
 
             users_collection.update_one(
                 {'company_id': company_id},
                 {'$set': {
-                    'tier': int(request.POST.get('tier')),
-                    'expiry_date': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30) + timedelta(months=6)
+                    'tier': tier,
+                    'expiry_date': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30) + timedelta(weeks=24)
                 }}
             )
             
@@ -103,6 +107,6 @@ class PaymentCallbackView(APIView):
                 'message': 'Payment verified and saved successfully.',
                 'reference_id': razorpay_payment_id,
                 'user': user
-                }, status=status.HTTP_200_OK)
+            }, status=status.HTTP_200_OK)
         
         return Response({'error': 'Invalid signature'}, status=status.HTTP_400_BAD_REQUEST)

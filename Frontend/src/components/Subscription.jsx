@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from 'react-toastify';
 
 const plans = [
   {
@@ -48,14 +49,13 @@ const Subscription = () => {
         }
       );
       const data = response.data;
-      console.log(data);
 
       const options = {
         key: data.key, // Replace with your Razorpay Key ID
         amount: data.amount, // Amount is in currency subunits (e.g., paise)
         currency: "INR",
-        name: "Acme Corp",
-        description: "Test Transaction",
+        name: "SalesSage",
+        description: `Tier ${tier}`,
         image: "https://example.com/your_logo",
         order_id: data.order_id, // Use the order_id fetched from your backend
         callback_url: "http://localhost:8000/subscription/callback/",
@@ -75,7 +75,7 @@ const Subscription = () => {
       const rzp1 = new window.Razorpay(options);
       rzp1.open();
     } catch (error) {
-      console.error('Error fetching order_id:', error);
+      toast.error('Error fetching order_id:', error);
       // Handle error
     }
   };
