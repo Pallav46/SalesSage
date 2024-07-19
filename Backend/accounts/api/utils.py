@@ -24,8 +24,8 @@ def send_otp_email(email, otp):
 def generate_access_token(user):
     access_token_payload = {
         'company_id': user['company_id'],
-        'exp': datetime.now(pytz.UTC) + timedelta(hours=1),
-        'iat': datetime.now(pytz.UTC)
+        'exp': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30) + timedelta(minutes=1),
+        'iat': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30)
     }
     access_token = jwt.encode(access_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return access_token
@@ -33,8 +33,8 @@ def generate_access_token(user):
 def generate_refresh_token(user):
     refresh_token_payload = {
         'company_id': user['company_id'],
-        'exp': datetime.now(pytz.UTC) + timedelta(days=7),
-        'iat': datetime.now(pytz.UTC)
+        'exp': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30) + timedelta(weeks=4),
+        'iat': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30)
     }
     refresh_token = jwt.encode(refresh_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return refresh_token

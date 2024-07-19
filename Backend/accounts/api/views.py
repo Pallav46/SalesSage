@@ -126,6 +126,7 @@ class RegisterCompany(APIView):
 
         return Response({
             'access_token': access_token,
+            'access_token_exp': 1,
             'refresh_token': refresh_token,
             'user': user
         }, status=status.HTTP_201_CREATED)
@@ -144,6 +145,7 @@ class LoginView(APIView):
             
             return Response({
                 'access_token': access_token,
+                'access_token_exp': 1,
                 'refresh_token': refresh_token,
                 'user': user
             }, status=status.HTTP_200_OK)
@@ -173,6 +175,7 @@ class RefreshTokenView(APIView):
             
         return Response({
             'access_token': access_token,
+            'access_token_exp': 1,
             'user': user
             }, status=status.HTTP_200_OK)
     
