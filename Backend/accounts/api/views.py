@@ -154,6 +154,7 @@ class RefreshTokenView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         refresh_token = request.data.get('refresh_token')
+        print(refresh_token)
         if refresh_token is None:
             return Response({'error': 'Please provide a refresh token'}, status=status.HTTP_400_BAD_REQUEST)
         try:

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useTheme } from "../../ThemeContext";
 import { FaTimes } from "react-icons/fa";
 import Signup from "./Signup";
-import axios from "axios";
+import api from "../../../api/api"; // Import the Axios instance
 import Cookies from "js-cookie";
 
 const Login = ({ onClose }) => {
@@ -30,18 +30,17 @@ const Login = ({ onClose }) => {
     e.preventDefault();
     if (username && password && !passwordError) {
       try {
-        const response = await axios.post("http://127.0.0.1:8000/accounts/login/", {
+        const response = await api.post("/accounts/login/", {
           company_id: username,
           password,
-          // remember_me: rememberMe,
         });
-  
+
         if (response.status === 200) {
           console.log("Login successful", response.data);
-  
+
           Cookies.set("accessToken", response.data.access_token, { secure: true, sameSite: 'Strict' });
           Cookies.set("refreshToken", response.data.refresh_token, { secure: true, sameSite: 'Strict' });
-  
+
           // Handle successful login (e.g., redirect)
           onClose(); // Close the login modal
         } else {
@@ -57,24 +56,18 @@ const Login = ({ onClose }) => {
   };
 
   return (
-    <div
-      className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? "dark" : ""}`}
-    >
-      <div
-        className={`w-full max-w-sm z-50 ${isDarkMode ? "dark" : ""}`}
-      >
+    <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? "dark" : ""}`}>
+      <div className={`w-full max-w-sm z-50 ${isDarkMode ? "dark" : ""}`}>
         {showSignup ? (
           <Signup onClose={() => setShowSignup(false)} />
         ) : (
           <form
             onSubmit={handleSubmit}
-            className={`bg-[#020024]-400 dark:bg-gray-800 shadow-md rounded-3xl px-8 pt-8 pb-10 mb-4 relative border-4 border-white backdrop-blur-lg ${
-              isDarkMode ? "dark" : ""
-            }`}
+            className={`bg-[#020024]-400 dark:bg-gray-800 shadow-md rounded-3xl px-8 pt-8 pb-10 mb-4 relative border-4 border-white backdrop-blur-lg ${isDarkMode ? "dark" : ""}`}
           >
             <button
               type="button"
-              onClick={onClose} // Close the modal when the cross button is clicked
+              onClick={onClose}
               className="absolute top-2 right-2 text-white-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-gray-100"
             >
               <FaTimes size={20} />
@@ -122,10 +115,7 @@ const Login = ({ onClose }) => {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="mr-2"
               />
-              <label
-                htmlFor="rememberMe"
-                className="text-sm text-white-700 dark:text-gray-300"
-              >
+              <label htmlFor="rememberMe" className="text-sm text-white-700 dark:text-gray-300">
                 Remember me
               </label>
             </div>
