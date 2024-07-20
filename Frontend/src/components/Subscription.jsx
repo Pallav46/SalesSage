@@ -1,5 +1,6 @@
-import axios from 'axios';
-import Cookies from 'js-cookie';
+import React, { useState, useEffect } from "react";
+import Cookies from "js-cookie";
+import axios from "axios";
 
 const plans = [
   {
@@ -23,9 +24,35 @@ const plans = [
 ];
 
 const Subscription = () => {
+  const [currentPlan, setCurrentPlan] = useState(null);
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const accessToken = Cookies.get('accessToken');
+
+        if (accessToken) {
+          const response = await axios.get("http://localhost:8000/accounts/me/", {
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          });
+          const fetchedUserData = response.data;
+          setUserData(fetchedUserData);
+          setCurrentPlan(parseInt(fetchedUserData.tier, 10));
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // Handle error, possibly show a message to the user
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   const handlePayment = async (tier) => {
     if (tier === 1) {
-      // Handle free plan subscription logic here
       console.log("Free plan selected. No payment required.");
       return;
     }
@@ -48,16 +75,15 @@ const Subscription = () => {
         }
       );
       const data = response.data;
-      console.log(data);
 
       const options = {
-        key: data.key, // Replace with your Razorpay Key ID
-        amount: data.amount, // Amount is in currency subunits (e.g., paise)
+        key: data.key,
+        amount: data.amount,
         currency: "INR",
         name: "SalesSage",
         description: `Tier ${tier}`,
         image: "https://example.com/your_logo",
-        order_id: data.order_id, // Use the order_id fetched from your backend
+        order_id: data.order_id,
         callback_url: "http://localhost:8000/subscription/callback/",
         prefill: {
           name: "Gaurav Kumar",
@@ -76,7 +102,6 @@ const Subscription = () => {
       rzp1.open();
     } catch (error) {
       console.error('Error fetching order_id:', error);
-      // Handle error
     }
   };
 
@@ -86,6 +111,13 @@ const Subscription = () => {
         <div className="flex items-center mb-8 md:mb-12">
           <h1 className="text-white text-3xl md:text-5xl font-bold mx-auto">Subscription Plans</h1>
         </div>
+        
+        {userData && (
+          <div className="text-white text-center mb-8">
+            <p>Welcome, {userData.company_name}</p>
+            <p>Your current plan expires on: {new Date(userData.expiry_date).toLocaleDateString()}</p>
+          </div>
+        )}
         
         <div className="flex flex-col md:flex-row justify-between space-y-8 md:space-y-0 md:space-x-8">
           {plans.map((plan, index) => (
@@ -126,10 +158,13 @@ const Subscription = () => {
                     ))}
                   </ul>
                   <button
-                    className="mt-8 bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-full transition duration-300 group-hover:scale-105"
+                    className={`mt-8 bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-full transition duration-300 group-hover:scale-105 ${
+                      currentPlan === plan.tier ? 'bg-green-500 hover:bg-green-600' : ''
+                    }`}
                     onClick={() => handlePayment(plan.tier)}
+                    disabled={currentPlan === plan.tier}
                   >
-                    {plan.tier === 1 ? 'Choose Plan' : 'Buy Now'}
+                    {currentPlan === plan.tier ? 'Current Plan' : (plan.tier === 1 ? 'Choose Plan' : 'Buy Now')}
                   </button>
                 </div>
               </div>

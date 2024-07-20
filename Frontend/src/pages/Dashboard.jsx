@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { useTheme } from "../ThemeContext";
+import axios from "axios";
+import Cookies from "js-cookie";
 
 const Dashboard = () => {
   const { isDarkMode } = useTheme();
   const [file, setFile] = useState(null);
+
+  // Function to refresh the token
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -55,7 +59,7 @@ const Dashboard = () => {
               <button
                 className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
                 onClick={() => {
-                  // Predict sales data functionality
+                  // Implement Predict Sales Data functionality
                 }}
               >
                 Predict Sales Data
@@ -63,7 +67,7 @@ const Dashboard = () => {
               <button
                 className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
                 onClick={() => {
-                  // Chat related to file functionality
+                  // Implement Chat About File functionality
                 }}
               >
                 Chat About File
