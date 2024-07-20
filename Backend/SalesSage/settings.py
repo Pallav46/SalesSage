@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 import os
+from pymongo import MongoClient
+import gridfs
 from dotenv import load_dotenv # type: ignore
 load_dotenv('.env')
 
@@ -161,6 +163,13 @@ MONGODB_USER = os.getenv('MONGODB_USER')
 MONGODB_PASSWORD = os.getenv('MONGODB_PASSWORD')
 
 CONNECTION_STRING = f"mongodb+srv://{MONGODB_USER}:{MONGODB_PASSWORD}@{MONGODB_HOST}/{MONGODB_NAME}?retryWrites=true&w=majority"
+
+MONGO_CLIENT = MongoClient(CONNECTION_STRING)
+
+
+DB = MONGO_CLIENT[MONGODB_NAME]
+# Set up GridFS
+FS = gridfs.GridFS(DB)
 
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')

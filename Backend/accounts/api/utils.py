@@ -27,7 +27,7 @@ def generate_access_token(user):
     now = datetime.now(IST)
     access_token_payload = {
         'company_id': user['company_id'],
-        'exp': now + timedelta(minutes=1),
+        'exp': now + timedelta(hours=3),
         'iat': now
     }
     access_token = jwt.encode(access_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
