@@ -55,6 +55,8 @@ class DataPreprocessing:
                     col_corr.add(colname)
         
         cols_to_drop.extend(list(col_corr))
+        if 'sales' in cols_to_drop: #Sales column should not be removed obviously
+            cols_to_drop.remove('sales')
         data.drop(cols_to_drop, axis=1, inplace=True)
         
         return data
