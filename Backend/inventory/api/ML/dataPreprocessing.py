@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, StandardScaler #type ignore
+from sklearn.preprocessing import LabelEncoder, StandardScaler #type: ignore
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -53,15 +53,17 @@ class DataPreprocessing:
                 if abs(corr_matrix.iloc[i, j]) > correlation_threshold:
                     colname = corr_matrix.columns[i]
                     col_corr.add(colname)
+                    
         
         cols_to_drop.extend(list(col_corr))
-        if 'sales' in cols_to_drop: #Sales column should not be removed obviously
+        if 'sales' or 'Sales' in cols_to_drop:
             cols_to_drop.remove('sales')
+            
         data.drop(cols_to_drop, axis=1, inplace=True)
         
         return data
         
-    def encoding_features(self, data: pd.DataFrame, encoding_threshold: int = 50):
+    def encoding_features(self, data: pd.DataFrame, encoding_threshold: int = 2):
         label_encoder = LabelEncoder()
         object_columns = data.select_dtypes(include=['object']).columns
         for col in object_columns:
@@ -81,8 +83,7 @@ class DataPreprocessing:
         
     def lowercase_columns(self, data: pd.DataFrame):
         data.columns = [col.lower() for col in data.columns]
-
-    #Change in this function only
+        
     def process_data(self, df: pd.DataFrame, normalize=False):
         data = df.copy()
         self.lowercase_columns(data)

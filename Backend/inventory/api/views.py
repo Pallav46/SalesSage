@@ -50,8 +50,7 @@ class SalesUploadView(APIView):
             return Response({"error": str(e)}, status=400)
         
         data_preprocessor = DataPreprocessing()
-        processed_data = data_preprocessor.process_data(data, normalize=False)
-
+        processed_data = data_preprocessor.process_data(data)
         data_dict = processed_data.to_dict('records')
 
         salesCollection = db[f"{request.user.company_id}_sales"]
