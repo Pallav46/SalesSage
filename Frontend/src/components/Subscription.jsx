@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
-import api from "../../api/api";
+import axios from 'axios';
+import Cookies from 'js-cookie';
 
 const plans = [
   {
@@ -24,47 +23,32 @@ const plans = [
 ];
 
 const Subscription = () => {
-  const [currentPlan, setCurrentPlan] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCurrentPlan = async () => {
-      setLoading(true);
-      try {
-        const accessToken = Cookies.get('accessToken');
-        if (!accessToken) {
-          // Show default cards if not logged in
-          setCurrentPlan(null);
-        } else {
-          // Fetch current plan if access token exists
-          try {
-            const response = await api.get('/subscription/current/');
-            setCurrentPlan(response.data.currentPlanTier);
-          } catch (fetchError) {
-            console.error("Error fetching current plan:", fetchError);
-            setCurrentPlan(null);
-          }
-        }
-      } catch (error) {
-        console.error("Error checking authentication:", error);
-        setCurrentPlan(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCurrentPlan();
-  }, []);
-
   const handlePayment = async (tier) => {
     if (tier === 1) {
+      // Handle free plan subscription logic here
       console.log("Free plan selected. No payment required.");
       return;
     }
 
     try {
-      const response = await api.post("/subscription/purchase/", { tier });
+      const accessToken = Cookies.get('accessToken');
+
+      if (!accessToken) {
+        console.error("No access token found. Please log in again.");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:8000/subscription/purchase/",
+        { tier },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      );
       const data = response.data;
+      console.log(data);
 
       const options = {
         key: data.key, // Replace with your Razorpay Key ID
@@ -91,13 +75,10 @@ const Subscription = () => {
       const rzp1 = new window.Razorpay(options);
       rzp1.open();
     } catch (error) {
-      console.error('Error initiating payment:', error);
+      console.error('Error fetching order_id:', error);
+      // Handle error
     }
   };
-
-  if (loading) {
-    return <div className="text-white text-center">Loading...</div>;
-  }
 
   return (
     <div className="bg-gradient-to-r from-color-300 via-color-400 to-color-500 min-h-screen p-4 md:p-8">
@@ -105,7 +86,7 @@ const Subscription = () => {
         <div className="flex items-center mb-8 md:mb-12">
           <h1 className="text-white text-3xl md:text-5xl font-bold mx-auto">Subscription Plans</h1>
         </div>
-
+        
         <div className="flex flex-col md:flex-row justify-between space-y-8 md:space-y-0 md:space-x-8">
           {plans.map((plan, index) => (
             <div
@@ -145,11 +126,10 @@ const Subscription = () => {
                     ))}
                   </ul>
                   <button
-                    className={`mt-8 ${currentPlan === plan.tier ? 'bg-gray-600' : 'bg-color-300 hover:bg-white hover:text-color-300'} text-white font-bold py-2 px-4 rounded-full transition duration-300 group-hover:scale-105`}
+                    className="mt-8 bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-full transition duration-300 group-hover:scale-105"
                     onClick={() => handlePayment(plan.tier)}
-                    disabled={currentPlan === plan.tier}
                   >
-                    {currentPlan === plan.tier ? 'Current Plan' : plan.tier === 1 ? 'Choose Plan' : 'Buy Now'}
+                    {plan.tier === 1 ? 'Choose Plan' : 'Buy Now'}
                   </button>
                 </div>
               </div>

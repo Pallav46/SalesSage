@@ -20,9 +20,41 @@ const updateTokens = (accessToken, refreshToken, expiresIn) => {
   Cookies.set('tokenExpiryTime', expiryTime, { secure: true, sameSite: 'Strict' });
 };
 
-// Add a request interceptor to include the access token in headers
+// Check if token should be refreshed
+const shouldRefreshToken = () => {
+  const tokenExpiryTime = parseInt(Cookies.get('tokenExpiryTime'), 10);
+  const remainingTime = getRemainingTime(tokenExpiryTime);
+  const refreshThreshold = 0.1; // 10%
+  return remainingTime <= (tokenExpiryTime - getCurrentTime()) * refreshThreshold;
+};
+
+// Add a request interceptor to include the access token in headers and refresh if needed
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    if (shouldRefreshToken()) {
+      try {
+        const refreshToken = Cookies.get('refreshToken');
+        const response = await axios.post(
+          'http://127.0.0.1:8000/accounts/refresh-token/',
+          { refresh_token: refreshToken },
+          {
+            headers: {
+              'Authorization': `Bearer ${Cookies.get('accessToken')}`
+            }
+          }
+        );
+
+        const { access_token: newAccessToken, refresh_token: newRefreshToken, access_token_exp: newExpiresIn } = response.data;
+        updateTokens(newAccessToken, newRefreshToken, newExpiresIn);
+      } catch (error) {
+        console.error('Token refresh error', error);
+        Cookies.remove('accessToken');
+        Cookies.remove('refreshToken');
+        Cookies.remove('tokenExpiryTime');
+        window.location.href = '/'; // Adjust according to your routing
+      }
+    }
+
     const token = Cookies.get('accessToken');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -37,10 +69,10 @@ api.interceptors.request.use(
 // Add a response interceptor to handle token refresh
 api.interceptors.response.use(
   (response) => {
-    // Update tokens and expiry time
+    // Update tokens and expiry time if present in the response
     if (response.data.access_token && response.data.refresh_token) {
-      const { access_token, refresh_token, expires_in } = response.data;
-      updateTokens(access_token, refresh_token, expires_in);
+      const { access_token, refresh_token, access_token_exp } = response.data;
+      updateTokens(access_token, refresh_token, access_token_exp);
     }
     return response;
   },
@@ -48,7 +80,6 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     const accessToken = Cookies.get('accessToken');
     const refreshToken = Cookies.get('refreshToken');
-    const tokenExpiryTime = Cookies.get('tokenExpiryTime');
 
     if (!accessToken || !refreshToken) {
       // No tokens available
@@ -56,12 +87,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Refresh token if it's 10% before expiry
-    const refreshThreshold = 0.1; // 10%
-    const remainingTime = getRemainingTime(tokenExpiryTime);
-    const refreshTime = remainingTime * refreshThreshold;
-
-    if (remainingTime <= refreshTime && !originalRequest._retry) {
+    if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
@@ -76,10 +102,10 @@ api.interceptors.response.use(
           }
         );
 
-        const { access_token: newAccessToken, access_token_exp: expires_in } = response.data;
+        const { access_token: newAccessToken, refresh_token: newRefreshToken, access_token_exp: newExpiresIn } = response.data;
 
         // Update tokens and their expiry time
-        updateTokens(newAccessToken, refreshToken, expires_in);
+        updateTokens(newAccessToken, newRefreshToken, newExpiresIn);
         api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
 
@@ -90,7 +116,7 @@ api.interceptors.response.use(
         Cookies.remove('accessToken');
         Cookies.remove('refreshToken');
         Cookies.remove('tokenExpiryTime');
-        window.location.href = '/login'; // Adjust according to your routing
+        window.location.href = '/'; // Adjust according to your routing
       }
     }
 
