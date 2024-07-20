@@ -15,7 +15,7 @@ const refreshToken = async () => {
     const refreshToken = Cookies.get('refreshToken');
     const accessToken = Cookies.get('accessToken');
     if (!refreshToken || !accessToken) {
-      console.error('No refresh token or access token found');
+      
       handleTokenExpiration();
       return;
     }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
 
@@ -41,6 +41,8 @@ const Subscription = () => {
           const fetchedUserData = response.data;
           setUserData(fetchedUserData);
           setCurrentPlan(parseInt(fetchedUserData.tier, 10));
+        } else {
+          setUserData(null); // Ensure userData is null if no token
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -105,6 +107,16 @@ const Subscription = () => {
     }
   };
 
+  const getButtonText = (tier) => {
+    if (!userData) return 'Buy Now';
+
+    if (currentPlan === null) return 'Loading...';
+
+    if (tier > currentPlan) return 'Upgrade';
+    if (tier < currentPlan) return 'Downgrade';
+    return 'Current Plan';
+  };
+
   return (
     <div className="bg-gradient-to-r from-color-300 via-color-400 to-color-500 min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -112,12 +124,7 @@ const Subscription = () => {
           <h1 className="text-white text-3xl md:text-5xl font-bold mx-auto">Subscription Plans</h1>
         </div>
         
-        {userData && (
-          <div className="text-white text-center mb-8">
-            <p>Welcome, {userData.company_name}</p>
-            <p>Your current plan expires on: {new Date(userData.expiry_date).toLocaleDateString()}</p>
-          </div>
-        )}
+       
         
         <div className="flex flex-col md:flex-row justify-between space-y-8 md:space-y-0 md:space-x-8">
           {plans.map((plan, index) => (
@@ -159,12 +166,12 @@ const Subscription = () => {
                   </ul>
                   <button
                     className={`mt-8 bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-full transition duration-300 group-hover:scale-105 ${
-                      currentPlan === plan.tier ? 'bg-green-500 hover:bg-green-600' : ''
+                      !userData ? 'bg-blue-500 hover:bg-blue-600' : (currentPlan === plan.tier ? 'bg-green-500 hover:bg-green-600' : '')
                     }`}
                     onClick={() => handlePayment(plan.tier)}
-                    disabled={currentPlan === plan.tier}
+                    disabled={!userData || currentPlan === plan.tier}
                   >
-                    {currentPlan === plan.tier ? 'Current Plan' : (plan.tier === 1 ? 'Choose Plan' : 'Buy Now')}
+                    {getButtonText(plan.tier)}
                   </button>
                 </div>
               </div>

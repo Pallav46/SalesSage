@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useTheme } from "../../ThemeContext";
 import { FaTimes } from "react-icons/fa";
 import Signup from "./Signup";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { startTokenRefresh } from "../../../api/api";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { toast } from "react-toastify";
+
 const Login = ({ onClose }) => {
   const { isDarkMode } = useTheme();
   const [username, setUsername] = useState("");
@@ -13,6 +16,8 @@ const Login = ({ onClose }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [loginError, setLoginError] = useState("");
+
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
@@ -33,7 +38,6 @@ const Login = ({ onClose }) => {
         const response = await axios.post("http://127.0.0.1:8000/accounts/login/", {
           company_id: username,
           password,
-          // remember_me: rememberMe,
         });
   
         if (response.status === 200) {
@@ -45,7 +49,9 @@ const Login = ({ onClose }) => {
           // Start the token refresh interval
           startTokenRefresh();
   
-          // Handle successful login (e.g., redirect)
+          // Navigate to the dashboard
+          navigate("/dashboard");
+          toast.success("Login Sucessfully")
           onClose(); // Close the login modal
         } else {
           setLoginError("Login failed. Please check your credentials.");
