@@ -1,5 +1,7 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, StandardScaler # type: ignore
+from sklearn.preprocessing import LabelEncoder, StandardScaler #type ignore
+import warnings
+warnings.filterwarnings('ignore')
 
 class DataPreprocessing:
     def handle_missing_values(self, data: pd.DataFrame, threshold: int = 10):
@@ -13,13 +15,34 @@ class DataPreprocessing:
                 data[col] = data[col].fillna(median_value)
                 
         return data
+    
+    def find_datetime_column(self, df: pd.DataFrame) -> str:
+        data = df 
+        for column in data.select_dtypes(include=['object']):
+            try:
+                data[column] = pd.to_datetime(data[column])
+                if pd.api.types.is_datetime64_any_dtype(data[column]):
+                    return column
+            except ValueError:
+                continue
+            
+        datetime_types = ["datetime64[ns]", "datetime64", "datetime", "datetimetz"]
+        datetime_columns = df.select_dtypes(include=datetime_types).columns
+        
+        if len(datetime_columns) > 0:
+            return datetime_columns[0]
+    
+        return None
 
     def dropni_features(self, data: pd.DataFrame, correlation_threshold=0.8, category_threshold: int=50):
         cols_to_drop = []
+        datetime_col = self.find_datetime_column(data)
         
         object_columns = data.select_dtypes(include=['object']).columns
         for col in object_columns:
-            if data[col].nunique() > category_threshold:
+            if col is datetime_col:
+                continue
+            elif data[col].nunique() > category_threshold:
                 cols_to_drop.append(col)
             
         col_corr = set()
@@ -56,8 +79,10 @@ class DataPreprocessing:
         
     def lowercase_columns(self, data: pd.DataFrame):
         data.columns = [col.lower() for col in data.columns]
-        
-    def process_data(self, data: pd.DataFrame, normalize=False):
+
+    #Change in this function only
+    def process_data(self, df: pd.DataFrame, normalize=False):
+        data = df.copy()
         self.lowercase_columns(data)
         self.handle_missing_values(data)
         self.dropni_features(data)
