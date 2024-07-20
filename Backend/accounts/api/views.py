@@ -20,6 +20,7 @@ client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 users_collection = db['company_user']
 otp_collection = db['otp_records']
+IST = pytz.timezone('Asia/Kolkata')
 
 class SendOTP(APIView):
     def post(self, request):
@@ -106,7 +107,7 @@ class RegisterCompany(APIView):
                 'company_name': company_name,
                 'company_id': company_id,
                 'password': make_password(password),
-                'created_at': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30),
+                'created_at': datetime.now(IST),
                 'tier': 1
             }}
         )

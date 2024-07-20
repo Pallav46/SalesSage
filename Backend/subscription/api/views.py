@@ -20,7 +20,7 @@ client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 users_collection = db['company_user']
 payments_collection = db['user_payments']
-
+IST = pytz.timezone('Asia/Kolkata')
 class PurchaseSubscriptionView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -80,7 +80,7 @@ class PaymentCallbackView(APIView):
         if generated_signature == razorpay_signature:
             payment_data = {
                 'company_id': company_id,
-                'payment_time': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30),
+                'payment_time': datetime.now(IST),
                 'payment_id': razorpay_payment_id,
                 'order_id': razorpay_order_id,
                 'signature': razorpay_signature
@@ -91,7 +91,7 @@ class PaymentCallbackView(APIView):
                 {'company_id': company_id},
                 {'$set': {
                     'tier': tier,
-                    'expiry_date': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30) + timedelta(weeks=24)
+                    'expiry_date': datetime.now(IST) + timedelta(weeks=24)
                 }}
             )
             
