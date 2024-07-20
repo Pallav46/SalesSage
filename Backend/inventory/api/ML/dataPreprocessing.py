@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler #type: ignore
 import warnings
 warnings.filterwarnings('ignore')
 
