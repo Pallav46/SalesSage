@@ -21,20 +21,24 @@ def send_otp_email(email, otp):
         fail_silently=False,
     )
 
+IST = pytz.timezone('Asia/Kolkata')
+
 def generate_access_token(user):
+    now = datetime.now(IST)
     access_token_payload = {
         'company_id': user['company_id'],
-        'exp': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30) + timedelta(minutes=1),
-        'iat': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30)
+        'exp': now + timedelta(minutes=1),
+        'iat': now
     }
     access_token = jwt.encode(access_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return access_token
 
 def generate_refresh_token(user):
+    now = datetime.now(IST)
     refresh_token_payload = {
         'company_id': user['company_id'],
-        'exp': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30) + timedelta(weeks=4),
-        'iat': datetime.now(pytz.UTC) + timedelta(hours=5, minutes=30)
+        'exp': now + timedelta(weeks=4),
+        'iat': now
     }
     refresh_token = jwt.encode(refresh_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return refresh_token
