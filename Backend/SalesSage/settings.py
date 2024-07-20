@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'inventory',
     'rest_framework',
     'corsheaders',
+    'subscription',
+    'chatBot',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -78,6 +81,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'SalesSage.wsgi.application'
 
+#WebSocket
+ASGI_APPLICATION = 'SalesSage.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
