@@ -1,38 +1,49 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+from collections import defaultdict
 from sklearn.preprocessing import RobustScaler #type ignore
 from tensorflow.keras.models import Sequential #type ignore
 from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNormalization #type ignore
 from tensorflow.keras.callbacks import EarlyStopping #type ignore
 from tensorflow.keras.optimizers import Adam, RMSprop #type ignore
 from tensorflow.keras.regularizers import l2 #type ignore
+from DataPreprocess.DataProcessing import DataPreprocessing
 import warnings
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 warnings.filterwarnings('ignore')
 
 class SalesPredictionModel:
-    def __init__(self, data: pd.DataFrame, lookback: int = 30, product_name: str = None):
+    def __init__(self, data: pd.DataFrame, lookback: int = 30, product_name: str = None, period='D'):
         self.data = data.copy()
         self.scaler = RobustScaler()
         self.product_name = product_name
         self.lookback = lookback
+        self.period = period
         self.model = None
         self.future_predictions = []
+        self.last_date = None
+        self.future_dates = []
+        self.product_price = None
 
     def load_data(self):
         if self.product_name is not None:
             self.data = self.data[self.data['product'] == self.product_name]
+            self.product_price = self.price_of_product(self.data, self.product_name)
         
         X = self.data.loc[:, ['order date', 'sales']]
         X['order date'] = pd.to_datetime(X['order date'])
-        X['order date'] = X['order date'].dt.to_period('D')
+        X['order date'] = X['order date'].dt.to_period(self.period)
         X = X.groupby('order date').sum()
 
         self.data = X.values
         self.data = self.data.reshape((-1, 1))
         self.data = self.scaler.fit_transform(self.data)
+        
+        self.last_date = X.index[-1].to_timestamp()
 
         return self.data
 
@@ -71,16 +82,20 @@ class SalesPredictionModel:
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
 
-    # def plot_predictions(self, actual, predicted, title):
-    #     plt.figure(figsize=(16, 6))
-    #     plt.plot(actual, label='Actual')
-    #     plt.plot(predicted, label='Predicted')
-    #     plt.ylabel('Sales_Prediction', size=13)
-    #     plt.xlabel('Time Step', size=13)
-    #     plt.tight_layout()
-    #     plt.legend(fontsize=13)
-    #     plt.title(title)
-    #     plt.show()
+    def plot_predictions(self, actual, predicted, title):
+        plt.figure(figsize=(16, 6))
+        plt.plot(actual, label='Actual')
+        plt.plot(predicted, label='Predicted')
+        plt.ylabel('Sales_Prediction', size=13)
+        plt.xlabel('Time Step', size=13)
+        plt.tight_layout()
+        plt.legend(fontsize=13)
+        plt.title(title)
+        plt.show()
+        
+    def price_of_product(self, data: pd.DataFrame, product_name: str):
+        product_data = data[data['product'] == product_name]
+        return product_data['price each'].iloc[0]
 
     def make_future_predictions(self, data, num_predictions=60):
         last_lookback_values = data[-self.lookback:].reshape(1, 1, self.lookback)
@@ -93,26 +108,44 @@ class SalesPredictionModel:
             last_lookback_values[0, 0, -1] = future_pred_scaled[0, 0]
 
         self.future_predictions = self.inverse_transform(np.array(self.future_predictions).reshape(-1, 1))
-
-    # def plot_future_predictions(self, data, num_predictions):
-    #     data_inverse = self.inverse_transform(data)
-    #     combined_data = np.concatenate((data_inverse, self.future_predictions), axis=0)
         
-    #     combined_df = pd.DataFrame(combined_data, columns=['Sales_Prediction'])
-    #     x_original = range(len(combined_data))
-    #     x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
+        if self.period == 'W':
+            self.future_dates = [self.last_date + timedelta(weeks=i+1) for i in range(len(self.future_predictions))]
+        elif self.period == 'D':
+            self.future_dates = [self.last_date + timedelta(days=i+1) for i in range(len(self.future_predictions))]
+        elif self.period == 'M':
+            self.future_dates = [self.last_date + pd.DateOffset(months=i+1) for i in range(len(self.future_predictions))]
 
-    #     plt.figure(figsize=(16, 6))
-    #     plt.plot(x_original, combined_df, label='Historical Sales')
-    #     plt.plot(x_future, self.future_predictions, label='Future Predictions')
-    #     plt.ylabel('Sales Prediction', size=13)
-    #     plt.xlabel('Time Step', size=13)
-    #     plt.tight_layout()
-    #     plt.legend(fontsize=13)
-    #     plt.show()
+    def plot_future_predictions(self, data, num_predictions):
+        data_inverse = self.inverse_transform(data)
+        combined_data = np.concatenate((data_inverse, self.future_predictions), axis=0)
+        
+        combined_df = pd.DataFrame(combined_data, columns=['Sales_Prediction'])
+        x_original = range(len(combined_data))
+        x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
+
+        plt.figure(figsize=(16, 6))
+        plt.plot(x_original, combined_df, label='Historical Sales')
+        plt.plot(x_future, self.future_predictions, label='Future Predictions')
+        plt.ylabel('Sales Prediction', size=13)
+        plt.xlabel('Time Step', size=13)
+        plt.tight_layout()
+        plt.legend(fontsize=13)
+        plt.show()
     
     def future_predictions_to_dict(self):
-        return {i: float(pred[0]) for i, pred in enumerate(self.future_predictions)}
+        if self.period == 'W':
+            return {
+                date.strftime(r'%Y-%W'): (float(pred), int(pred // self.product_price)) for date, pred in zip(self.future_dates, self.future_predictions)
+            }
+        elif self.period == 'D':
+            return {
+                date.strftime(r'%Y-%m-%d'): (float(pred), int(pred // self.product_price)) for date, pred in zip(self.future_dates, self.future_predictions)
+            }
+        elif self.period == 'M':
+            return {
+                date.strftime(r'%Y-%m'): (float(pred), int(pred // self.product_price)) for date, pred in zip(self.future_dates, self.future_predictions)
+            }
 
     def run(self, num_pred: int = 30):
         self.data = self.load_data()
@@ -131,11 +164,12 @@ class SalesPredictionModel:
         # self.plot_future_predictions(self.data, num_predictions=num_pred)
 
 
+# Use this to visualize
 # if __name__ == "__main__":
 #     df = pd.read_csv(r'DataPreprocess\data\Sales Data.csv')
 #     proc = DataPreprocessing()
-#     df = proc.process_data(df)
-#     model = SalesPredictionModel(df, lookback=60, product_name="Macbook Pro Laptop")
+#     df_proc = proc.process_data(df)
+#     model = SalesPredictionModel(df_proc, lookback=60, product_name="Macbook Pro Laptop")
 #     model.run(num_pred=30)
 #     future_dict = model.future_predictions_to_dict()
 #     print(future_dict)
