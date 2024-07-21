@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 
 const Welcome = () => {
   const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false); // Add loading state
   const fileInputRef = useRef(null);
 
   const handleFileChange = (event) => {
@@ -27,8 +28,10 @@ const Welcome = () => {
     const formData = new FormData();
     formData.append('file', file);
 
+    setLoading(true); // Set loading to true when upload starts
+
     try {
-      const response = await axios.post('http://localhost:8000/inventory/upload-sales/', formData, {
+      const response = await axios.post('http://localhost:8000/inventory/upload-sales-file/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${Cookies.get("accessToken")}`
@@ -42,6 +45,8 @@ const Welcome = () => {
       setFile(null);
       fileInputRef.current.value = ''; 
       console.error(error);
+    } finally {
+      setLoading(false); // Set loading to false when upload completes or fails
     }
   };
 
@@ -76,9 +81,10 @@ const Welcome = () => {
             <button
               onClick={handleUpload}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors flex items-center"
+              disabled={loading} // Disable button while loading
             >
               <FaArrowUp className="mr-2" />
-              <span>Predict Sales</span>
+              <span>{loading ? 'Uploading...' : 'Predict Sales'}</span>
             </button>
           </div>
         </div>
@@ -104,6 +110,13 @@ const Welcome = () => {
             >
               <FaTimes />
             </button>
+          </div>
+        )}
+
+        {/* Loader */}
+        {loading && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+            <div className="w-16 h-16 border-4 border-t-4 border-blue-600 border-opacity-50 rounded-full animate-spin"></div>
           </div>
         )}
       </div>

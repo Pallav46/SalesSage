@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FaPaperclip, FaArrowUp, FaTimes } from 'react-icons/fa';
 
-const InputMessage = ({ onSendMessage }) => {
+const InputMessage = ({ onSendMessage, isDisabled }) => {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
 
@@ -14,13 +14,22 @@ const InputMessage = ({ onSendMessage }) => {
   };
 
   const handleSendMessage = () => {
-    onSendMessage(message, file);
-    setMessage('');
-    setFile(null);
+    if (message.trim() !== '' && !isDisabled) {
+      onSendMessage(message, file);
+      setMessage('');
+      setFile(null);
+    }
   };
 
   const handleRemoveFile = () => {
     setFile(null);
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter' && !isDisabled) {
+      event.preventDefault();
+      handleSendMessage();
+    }
   };
 
   return (
@@ -32,8 +41,9 @@ const InputMessage = ({ onSendMessage }) => {
           onChange={handleFileChange}
           className="hidden"
           id="fileInput"
+          disabled={isDisabled}
         />
-        <label htmlFor="fileInput" className="cursor-pointer text-blue-900 p-2 hover:text-gray-400">
+        <label htmlFor="fileInput" className={`cursor-pointer text-blue-900 p-2 hover:text-gray-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
           <FaPaperclip className="text-xl" />
         </label>
         <input
@@ -41,11 +51,14 @@ const InputMessage = ({ onSendMessage }) => {
           placeholder="Type Something..."
           value={message}
           onChange={handleMessageChange}
+          onKeyPress={handleKeyPress}
           className="flex-grow bg-transparent outline-none px-4"
+          disabled={isDisabled}
         />
         <button
           onClick={handleSendMessage}
-          className="text-blue-900 p-2 hover:text-gray-400"
+          className={`text-blue-900 p-2 hover:text-gray-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isDisabled}
         >
           <FaArrowUp className="text-xl" />
         </button>

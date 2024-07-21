@@ -29,7 +29,7 @@ const DropdownMenu = () => {
   };
 
   const handleMyPlanClick = () => {
-    navigate('/my-plan'); // Navigate to /my-plan
+    
   };
 
   const handleLogoutClick = async () => {
@@ -74,12 +74,6 @@ const DropdownMenu = () => {
               onClick={handleProfileClick}
             >
               Profile
-            </li>
-            <li
-              className="px-4 py-2 hover:bg-gray-600 cursor-pointer"
-              onClick={handleMyPlanClick}
-            >
-              My Plan
             </li>
             <li
               className="px-4 py-2 hover:bg-gray-600 cursor-pointer"

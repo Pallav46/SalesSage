@@ -1,27 +1,31 @@
-import { useState, useEffect } from "react";
-import Sidebar from "../components/dashboard/Sidebar";
-import DropdownMenu from "../components/dashboard/DropdownMenu";
-import { FaArrowRight } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
-import NewMessages from "../components/chat/NewMessges";// Ensure correct import
-import InputMessage from "../components/dashboard/InputMessage"; // Ensure correct import
+import React, { useEffect, useState } from 'react';
+import { FaArrowRight } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import Sidebar from '../components/dashboard/Sidebar';
+import DropdownMenu from '../components/dashboard/DropdownMenu';
+import InputMessage from '../components/dashboard/InputMessage'
+import NewMessages from '../components/chat/NewMessges';
 
 const NewChat = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [userMessage, setUserMessage] = useState('');
+  const [accumulatedMessage, setAccumulatedMessage] = useState([]);
   const [ws, setWs] = useState(null);
+  const [isResponding, setIsResponding] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const webSocket = new WebSocket('ws://localhost:8000/ws/chat/');
-    
+
     webSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      setMessages((prevMessages) => [...prevMessages, data]);
+      setAccumulatedMessage((prevMessages) => [
+        ...prevMessages,
+        data,
+      ]);
     };
-    
+
     setWs(webSocket);
-    
     return () => {
       webSocket.close();
     };
@@ -37,12 +41,15 @@ const NewChat = () => {
 
   const handleSendMessage = (message, file) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
+      setIsResponding(true);
+      setUserMessage(message);
+      setAccumulatedMessage([]);
       ws.send(JSON.stringify({ message, file: file ? file.name : null }));
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { message, file: file ? file.name : null, type: 'sent' }
-      ]);
     }
+  };
+
+  const handleResponseComplete = () => {
+    setIsResponding(false);
   };
 
   return (
@@ -67,9 +74,13 @@ const NewChat = () => {
           <DropdownMenu />
         </header>
         <div className="flex-grow p-4 overflow-auto">
-          <NewMessages messages={messages} />
+          <NewMessages 
+            userMessage={userMessage} 
+            accumulatedMessage={accumulatedMessage} 
+            onResponseComplete={handleResponseComplete} 
+          />
         </div>
-        <InputMessage onSendMessage={handleSendMessage} />
+        <InputMessage onSendMessage={handleSendMessage} isDisabled={isResponding} />
       </div>
     </div>
   );

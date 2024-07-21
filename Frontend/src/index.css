@@ -35,3 +35,29 @@
 .Toastify__toast-body {
   color: white; /* Text color */
 }
+
+.scrollbar-container {
+    overflow-y: auto;
+    
+    scrollbar-width: thin; /* "auto" | "thin" | "none" */
+    scrollbar-color: #4F46E5 #E5E7EB; /* thumb color track color */
+  }
+  
+  /* WebKit (Safari, Chrome, Edge) */
+  .scrollbar-container::-webkit-scrollbar {
+    width: 8px; /* Adjust as needed */
+  }
+  
+  .scrollbar-container::-webkit-scrollbar-track {
+    background-color: #E5E7EB; /* Track color */
+  }
+  
+  .scrollbar-container::-webkit-scrollbar-thumb {
+    background-color: #4F46E5; /* Thumb color */
+    border-radius: 4px; /* Rounded corners */
+  }
+  
+  .scrollbar-container::-webkit-scrollbar-thumb:hover {
+    background-color: #4338CA; /* Hover state */
+  }
+  

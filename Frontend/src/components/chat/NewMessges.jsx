@@ -1,50 +1,72 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
-const NewMessages = ({ messages }) => {
+const NewMessages = ({ userMessage, accumulatedMessage, onResponseComplete }) => {
   const [displayedMessages, setDisplayedMessages] = useState([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (userMessage) {
+      setDisplayedMessages((prevMessages) => [
+        ...prevMessages,
+        { type: 'user', message: userMessage }
+      ]);
+      setCurrentMessage('');
+    }
+  }, [userMessage]);
 
   useEffect(() => {
     let index = 0;
-    const interval = setInterval(() => {
-      if (index < messages.length) {
-        setDisplayedMessages((prevMessages) => [...prevMessages, messages[index]]);
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 500); // Adjust the delay as needed
+    let newMessage = '';
+    
+    if (accumulatedMessage.length > 0) {
+      const combinedMessage = accumulatedMessage.map(msg => msg.message).join(' ');
 
-    return () => clearInterval(interval);
-  }, [messages]);
+      const interval = setInterval(() => {
+        if (index < combinedMessage.length) {
+          newMessage += combinedMessage[index];
+          setCurrentMessage(newMessage);
+          index++;
+        } else {
+          clearInterval(interval);
+          setDisplayedMessages(prevMessages => [
+            ...prevMessages,
+            { type: 'ai', message: newMessage }
+          ]);
+          setCurrentMessage('');
+          onResponseComplete();
+        }
+      }, 10); // Adjust the speed as needed
+      return () => clearInterval(interval);
+    }
+  }, [accumulatedMessage, onResponseComplete]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [displayedMessages, currentMessage]);
 
   return (
     <div className="flex flex-col space-y-2 overflow-auto h-full">
-      {displayedMessages.map((msg, index) => {
-        // Ensure msg is defined and has the expected properties
-        if (!msg || typeof msg.type === 'undefined') {
-          return null;
-        }
-
-        return (
-          <div
-            key={index}
-            className={`p-2 rounded-lg ${
-              msg.type === 'sent' ? 'bg-blue-500 text-white self-end' : 'bg-gray-300 text-black self-start'
-            }`}
-          >
-            <p>{msg.message || 'No message'}</p>
-            {msg.file && (
-              <a
-                href={`/${msg.file}`}
-                download
-                className="text-blue-300 underline"
-              >
-                {msg.file}
-              </a>
-            )}
-          </div>
-        );
-      })}
+      {displayedMessages.map((msg, index) => (
+        <div
+          key={index}
+          className={`p-2 rounded-lg ${
+            msg.type === 'user' ? 'bg-gray-300 text-black self-end' : 'bg-blue-500 text-white self-start'
+          }`}
+        >
+          <p>{msg.message}</p>
+        </div>
+      ))}
+      {currentMessage && (
+        <div className="p-2 rounded-lg bg-blue-500 text-white self-start">
+          <p>{currentMessage}</p>
+        </div>
+      )}
+      <div ref={messagesEndRef} />
     </div>
   );
 };
