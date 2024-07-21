@@ -17,6 +17,8 @@ from rest_framework.views import APIView
 
 from accounts.api.authentication import JWTAuthentication
 
+from .ML.lstmModel import SalesPredictionModel
+
 client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 collection = db['inventory_items']
@@ -158,3 +160,39 @@ class SalesListView(APIView):
 
         except Exception as e:
             return Response({"error": {str(e)}}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class FuturePredictionView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        salesCollection = db[f"{request.user.company_id}_sales"]
+        fs = settings.FS
+
+        try:
+            all_documents = list(salesCollection.find())
+
+            all_data = []
+
+            for document in all_documents:
+                file_id = document.get('file_id')
+                if file_id:
+                    grid_out = fs.get(file_id)
+
+                    json_data = grid_out.read().decode('utf-8')
+                    data = json.loads(json_data)
+                    
+                    all_data.extend(data)
+
+            df = pd.DataFrame(all_data)
+            df = df.drop_duplicates()
+
+            model = SalesPredictionModel(data_frame=df)
+            model.run()
+            future_predictions = model.future_predictions_to_dict()
+
+            return Response(future_predictions, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
