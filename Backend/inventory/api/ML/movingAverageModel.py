@@ -67,8 +67,11 @@ def price_of_product(data: pd.DataFrame, product_name: str):
     product_data = data[data['product'] == product_name]
     return product_data['price_each'].mean()
 
-def predict_for_product(data: pd.DataFrame, product_name: str, time_interval: str, noOfPred: int = 5):
-    product_df = data[data['product'] == product_name]
+def predict_for_product(data: pd.DataFrame, time_interval: str, product_name: str=None, noOfPred: int = 5):
+    if product_name is not None: 
+        product_df = data[data['product'] == product_name]
+    else:
+        product_df = data
     timely_sales, forecast_sales = prepare_data(product_df, time_interval, noOfPred)
 
     if isinstance(timely_sales, pd.Series):
