@@ -74,7 +74,7 @@ class SalesPredictionModel:
     def train_model(self, X_train, Y_train):
         self.model = self.build_model((X_train.shape[1], X_train.shape[2]))
         early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
-        self.model.fit(X_train, Y_train, validation_split=0.2, epochs=100, batch_size=32, callbacks=[early_stopping], verbose=1)
+        self.model.fit(X_train, Y_train, validation_split=0.2, epochs=200, batch_size=32, callbacks=[early_stopping], verbose=1)
 
     def predict(self, X):
         return self.model.predict(X)
