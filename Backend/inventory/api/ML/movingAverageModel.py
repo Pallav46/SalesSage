@@ -1,7 +1,7 @@
 import pandas as pd
 from statsmodels.tsa.holtwinters import ExponentialSmoothing # type: ignore
 import warnings
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 warnings.filterwarnings('ignore')
 

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import Sidebar from '../components/dashboard/Sidebar';
 import DropdownMenu from '../components/dashboard/DropdownMenu';
 import Welcome from '../components/dashboard/Welcome';
-import InputMessage from '../components/dashboard/InputMessage';
 import { FaArrowRight } from 'react-icons/fa';
 
 const Dashboard = () => {
@@ -28,7 +27,6 @@ const Dashboard = () => {
           <DropdownMenu />
         </header>
         <Welcome />
-        <InputMessage />
       </div>
     </div>
   );

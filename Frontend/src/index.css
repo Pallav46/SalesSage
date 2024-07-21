@@ -4,21 +4,34 @@
 
 /* customToast.css */
 
-/* customToast.css */
-
+/* Success Toast */
 .Toastify__toast--success {
-    background-color: #1d4ed8; /* Blue color for background */
-  }
-  
-  .Toastify__toast--success .Toastify__progress-bar {
-    background-color: #020024; /* Custom progress bar color */
-  }
-  
-  .Toastify__toast--error {
-    background-color: #ef4444; /* Red color for errors, optional */
-  }
-  
-  .Toastify__toast-body {
-    color: white; /* Text color */
-  }
-  
+  background-color: #1d4ed8; /* Blue color for background */
+}
+
+.Toastify__toast--success .Toastify__progress-bar {
+  background-color: #020024; /* Custom progress bar color */
+}
+
+/* Error Toast */
+.Toastify__toast--error {
+  background-color: #ef4444; /* Red color for errors */
+}
+
+.Toastify__toast--error .Toastify__progress-bar {
+  background-color: #b91c1c; /* Darker red color for progress bar */
+}
+
+/* Warning Toast */
+.Toastify__toast--warning {
+  background-color: #f59e0b; /* Yellow color for warnings */
+}
+
+.Toastify__toast--warning .Toastify__progress-bar {
+  background-color: #d97706; /* Darker yellow color for progress bar */
+}
+
+/* Toast Body */
+.Toastify__toast-body {
+  color: white; /* Text color */
+}

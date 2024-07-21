@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 from accounts.api.authentication import JWTAuthentication
 
 from .ML.lstmModel import SalesPredictionModel
+from .ML.dataPreprocessing import DataPreprocessing
 
 client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
@@ -187,7 +188,10 @@ class FuturePredictionView(APIView):
             df = pd.DataFrame(all_data)
             df = df.drop_duplicates()
 
-            model = SalesPredictionModel(data_frame=df)
+            dp = DataPreprocessing()
+            df = dp.process_data(df)
+
+            model = SalesPredictionModel(data=df)
             model.run()
             future_predictions = model.future_predictions_to_dict()
 
