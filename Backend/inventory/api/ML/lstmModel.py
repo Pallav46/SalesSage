@@ -8,21 +8,23 @@ from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNo
 from tensorflow.keras.callbacks import EarlyStopping #type ignore
 from tensorflow.keras.optimizers import Adam, RMSprop #type ignore
 from tensorflow.keras.regularizers import l2 #type ignore
+from DataPreprocess.DataProcessing import DataPreprocessing
 import warnings
 
 warnings.filterwarnings('ignore')
 
 class SalesPredictionModel:
-    def __init__(self, data: pd.DataFrame, lookback: int = 30):
+    def __init__(self, data: pd.DataFrame, lookback: int = 30, product_name: str = None):
         self.data = data.copy()
         self.scaler = RobustScaler()
+        self.product_name = product_name
         self.lookback = lookback
         self.model = None
         self.future_predictions = []
 
-    def load_data(self, product_name: str = None):
-        if product_name is not None:
-            self.data = self.data[self.data['product'] == product_name]
+    def load_data(self):
+        if self.product_name is not None:
+            self.data = self.data[self.data['product'] == self.product_name]
         
         X = self.data.loc[:, ['order date', 'sales']]
         X['order date'] = pd.to_datetime(X['order date'])
@@ -134,7 +136,7 @@ class SalesPredictionModel:
 #     df = pd.read_csv(r'DataPreprocess\data\Sales Data.csv')
 #     proc = DataPreprocessing()
 #     df = proc.process_data(df)
-#     model = SalesPredictionModel(df, lookback=60)
+#     model = SalesPredictionModel(df, lookback=60, product_name="Macbook Pro Laptop")
 #     model.run(num_pred=30)
 #     future_dict = model.future_predictions_to_dict()
 #     print(future_dict)
