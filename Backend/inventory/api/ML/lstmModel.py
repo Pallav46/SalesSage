@@ -1,42 +1,39 @@
 import pandas as pd
 import numpy as np
-# import matplotlib.pyplot as plt
-# import seaborn as sns
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.preprocessing import RobustScaler #type ignore
 from tensorflow.keras.models import Sequential #type ignore
 from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNormalization #type ignore
 from tensorflow.keras.callbacks import EarlyStopping #type ignore
 from tensorflow.keras.optimizers import Adam, RMSprop #type ignore
 from tensorflow.keras.regularizers import l2 #type ignore
-
 import warnings
+
 warnings.filterwarnings('ignore')
-from DataPreprocess.DataProcessing import DataPreprocessing
 
 class SalesPredictionModel:
-    def __init__(self, data, lookback:int=30, product_name: str=None):
-        self.data = data
+    def __init__(self, data: pd.DataFrame, lookback: int = 30):
+        self.data = data.copy()
         self.scaler = RobustScaler()
-        self.product_name = product_name
         self.lookback = lookback
         self.model = None
         self.future_predictions = []
 
-    def load_data(self):
-        if self.product_name is not None:
-            self.data = self.data[self.data['product'] == self.product_name]
-        else:
-            self.data = self.data.dropna()
-        X = data.loc[:, ['order date', 'sales']]
+    def load_data(self, product_name: str = None):
+        if product_name is not None:
+            self.data = self.data[self.data['product'] == product_name]
+        
+        X = self.data.loc[:, ['order date', 'sales']]
         X['order date'] = pd.to_datetime(X['order date'])
         X['order date'] = X['order date'].dt.to_period('D')
         X = X.groupby('order date').sum()
 
-        data = X.values
-        data = data.reshape((-1, 1))
-        data = self.scaler.fit_transform(data)
+        self.data = X.values
+        self.data = self.data.reshape((-1, 1))
+        self.data = self.scaler.fit_transform(self.data)
 
-        return data
+        return self.data
 
     def create_dataset(self, df, lookback=1):
         X, Y = [], []
@@ -104,7 +101,6 @@ class SalesPredictionModel:
         x_original = range(len(combined_data))
         x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
 
-        # Plot historical sales and future predictions
         plt.figure(figsize=(16, 6))
         plt.plot(x_original, combined_df, label='Historical Sales')
         plt.plot(x_future, self.future_predictions, label='Future Predictions')
@@ -117,9 +113,9 @@ class SalesPredictionModel:
     def future_predictions_to_dict(self):
         return {i: float(pred[0]) for i, pred in enumerate(self.future_predictions)}
 
-    def run(self, num_pred:int=30):
-        data = self.load_data()
-        X_data, Y_data = self.create_dataset(data, self.lookback)
+    def run(self, num_pred: int = 30):
+        self.data = self.load_data()
+        X_data, Y_data = self.create_dataset(self.data, self.lookback)
         X_data = np.reshape(X_data, (X_data.shape[0], 1, X_data.shape[1]))
 
         self.train_model(X_data, Y_data)
@@ -130,12 +126,15 @@ class SalesPredictionModel:
 
         # self.plot_predictions(Y_data[0], data_predict[:, 0], "Historical Sales Predictions")
 
-        self.make_future_predictions(data, num_predictions=num_pred)
-        # self.plot_future_predictions(data, num_predictions=num_pred)
+        self.make_future_predictions(self.data, num_predictions=num_pred)
+        # self.plot_future_predictions(self.data, num_predictions=num_pred)
 
-if __name__ == "__main__":
-    df = pd.DataFrame
-    model = SalesPredictionModel(df, lookback=7)
-    model.run(num_pred=30)
-    future_dict = model.future_predictions_to_dict
-    print(future_dict)
+
+# if __name__ == "__main__":
+#     df = pd.read_csv(r'DataPreprocess\data\Sales Data.csv')
+#     proc = DataPreprocessing()
+#     df = proc.process_data(df)
+#     model = SalesPredictionModel(df, lookback=60)
+#     model.run(num_pred=30)
+#     future_dict = model.future_predictions_to_dict()
+#     print(future_dict)
