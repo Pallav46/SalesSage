@@ -127,10 +127,10 @@ class SalesPredictionModel:
         data_predict = self.inverse_transform(data_predict)
         Y_data = self.inverse_transform([Y_data])
 
-        self.plot_predictions(Y_data[0], data_predict[:, 0], "Historical Sales Predictions")
+        #self.plot_predictions(Y_data[0], data_predict[:, 0], "Historical Sales Predictions") #Plotting training prediction
 
         self.make_future_predictions(data, num_predictions=num_pred)
-        self.plot_future_predictions(data, num_predictions=num_pred)
+        #self.plot_future_predictions(data, num_predictions=num_pred) #Use for plotting
 
 if __name__ == "__main__":
     model = SalesPredictionModel(r'DataPreprocess\data\Sales Data.csv')
