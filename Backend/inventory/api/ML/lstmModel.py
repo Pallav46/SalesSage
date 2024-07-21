@@ -47,10 +47,10 @@ X_data = np.reshape(X_data, (X_data.shape[0], 1, X_data.shape[1]))
 # Build the model
 print("Model Training Starts.......")
 model = Sequential()
-model.add(Bidirectional(LSTM(500, activation='tanh', return_sequences=True, kernel_regularizer=l2(0.1)), input_shape=(X_data.shape[1], X_data.shape[2])))
+model.add(Bidirectional(LSTM(1000, activation='tanh', return_sequences=True, kernel_regularizer=l2(0.1)), input_shape=(X_data.shape[1], X_data.shape[2])))
 model.add(BatchNormalization())
 model.add(Dropout(0.5))
-model.add(Bidirectional(LSTM(250, activation='tanh', kernel_regularizer=l2(0.1))))
+model.add(Bidirectional(LSTM(500, activation='tanh', kernel_regularizer=l2(0.1))))
 model.add(BatchNormalization())
 model.add(Dropout(0.5))
 model.add(Dense(128, activation='relu', kernel_regularizer=l2(0.1)))
@@ -74,6 +74,16 @@ data_predict = model.predict(X_data)
 data_predict = scaler.inverse_transform(data_predict)
 Y_data = scaler.inverse_transform([Y_data])
 
+# Plot dataset predictions
+plt.figure(figsize=(16, 6))
+plt.plot(Y_data[0], label='Actual')
+plt.plot(data_predict[:, 0], label='Predicted')
+plt.ylabel('Sales_Prediction', size=13)
+plt.xlabel('Time Step', size=13)
+plt.tight_layout()
+plt.legend(fontsize=13)
+plt.show()
+
 # Future predictions using the entire dataset
 last_lookback_values = data[-lookback:].reshape(1, 1, lookback)
 
@@ -88,30 +98,20 @@ for _ in range(num_predictions):
 
 future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
 
-# # Plot dataset predictions
-# plt.figure(figsize=(16, 6))
-# plt.plot(Y_data[0], label='Actual')
-# plt.plot(data_predict[:, 0], label='Predicted')
-# plt.ylabel('Sales_Prediction', size=13)
-# plt.xlabel('Time Step', size=13)
-# plt.tight_layout()
-# plt.legend(fontsize=13)
-# plt.show()
+data_inverse = scaler.inverse_transform(data)
+combined_data = np.concatenate((data_inverse, future_predictions), axis=0)
 
-# data_inverse = scaler.inverse_transform(data)
-# combined_data = np.concatenate((data_inverse, future_predictions), axis=0)
+# Create a new DataFrame to plot the combined data
+combined_df = pd.DataFrame(combined_data, columns=['Sales_Prediction'])
+x_original = range(len(combined_data))
+x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
 
-# # Create a new DataFrame to plot the combined data
-# combined_df = pd.DataFrame(combined_data, columns=['Sales_Prediction'])
-# x_original = range(len(combined_data))
-# x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
-
-# # Plot historical sales and future predictions
-# plt.figure(figsize=(16, 6))
-# plt.plot(x_original, combined_df, label='Historical Sales')
-# plt.plot(x_future, future_predictions, label='Future Predictions')
-# plt.ylabel('Sales Prediction', size=13)
-# plt.xlabel('Time Step', size=13)
-# plt.tight_layout()
-# plt.legend(fontsize=13)
-# plt.show()
+# Plot historical sales and future predictions
+plt.figure(figsize=(16, 6))
+plt.plot(x_original, combined_df, label='Historical Sales')
+plt.plot(x_future, future_predictions, label='Future Predictions')
+plt.ylabel('Sales Prediction', size=13)
+plt.xlabel('Time Step', size=13)
+plt.tight_layout()
+plt.legend(fontsize=13)
+plt.show()
