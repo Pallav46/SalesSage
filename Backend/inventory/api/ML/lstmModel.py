@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.preprocessing import RobustScaler #type ignore
-from tensorflow.keras.models import Sequential #type ignore
-from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNormalization #type ignore
-from tensorflow.keras.callbacks import EarlyStopping #type ignore
-from tensorflow.keras.optimizers import Adam, RMSprop #type ignore
-from tensorflow.keras.regularizers import l2 #type ignore
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+from sklearn.preprocessing import RobustScaler #type: ignore
+from tensorflow.keras.models import Sequential #type: ignore
+from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNormalization #type: ignore
+from tensorflow.keras.callbacks import EarlyStopping #type: ignore
+from tensorflow.keras.optimizers import Adam, RMSprop #type: ignore
+from tensorflow.keras.regularizers import l2 #type: ignore
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -70,16 +70,16 @@ class SalesPredictionModel:
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
 
-    def plot_predictions(self, actual, predicted, title):
-        plt.figure(figsize=(16, 6))
-        plt.plot(actual, label='Actual')
-        plt.plot(predicted, label='Predicted')
-        plt.ylabel('Sales_Prediction', size=13)
-        plt.xlabel('Time Step', size=13)
-        plt.tight_layout()
-        plt.legend(fontsize=13)
-        plt.title(title)
-        plt.show()
+    # def plot_predictions(self, actual, predicted, title):
+    #     plt.figure(figsize=(16, 6))
+    #     plt.plot(actual, label='Actual')
+    #     plt.plot(predicted, label='Predicted')
+    #     plt.ylabel('Sales_Prediction', size=13)
+    #     plt.xlabel('Time Step', size=13)
+    #     plt.tight_layout()
+    #     plt.legend(fontsize=13)
+    #     plt.title(title)
+    #     plt.show()
 
     def make_future_predictions(self, data, num_predictions=60):
         last_lookback_values = data[-self.lookback:].reshape(1, 1, self.lookback)
@@ -93,22 +93,22 @@ class SalesPredictionModel:
 
         self.future_predictions = self.inverse_transform(np.array(self.future_predictions).reshape(-1, 1))
 
-    def plot_future_predictions(self, data, num_predictions):
-        data_inverse = self.inverse_transform(data)
-        combined_data = np.concatenate((data_inverse, self.future_predictions), axis=0)
+    # def plot_future_predictions(self, data, num_predictions):
+    #     data_inverse = self.inverse_transform(data)
+    #     combined_data = np.concatenate((data_inverse, self.future_predictions), axis=0)
         
-        combined_df = pd.DataFrame(combined_data, columns=['Sales_Prediction'])
-        x_original = range(len(combined_data))
-        x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
+    #     combined_df = pd.DataFrame(combined_data, columns=['Sales_Prediction'])
+    #     x_original = range(len(combined_data))
+    #     x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
 
-        plt.figure(figsize=(16, 6))
-        plt.plot(x_original, combined_df, label='Historical Sales')
-        plt.plot(x_future, self.future_predictions, label='Future Predictions')
-        plt.ylabel('Sales Prediction', size=13)
-        plt.xlabel('Time Step', size=13)
-        plt.tight_layout()
-        plt.legend(fontsize=13)
-        plt.show()
+    #     plt.figure(figsize=(16, 6))
+    #     plt.plot(x_original, combined_df, label='Historical Sales')
+    #     plt.plot(x_future, self.future_predictions, label='Future Predictions')
+    #     plt.ylabel('Sales Prediction', size=13)
+    #     plt.xlabel('Time Step', size=13)
+    #     plt.tight_layout()
+    #     plt.legend(fontsize=13)
+    #     plt.show()
     
     def future_predictions_to_dict(self):
         return {i: float(pred[0]) for i, pred in enumerate(self.future_predictions)}
