@@ -1,32 +1,33 @@
 import pandas as pd
 import numpy as np
 # import matplotlib.pyplot as plt
-# import seaborn as sns 
-from sklearn.preprocessing import RobustScaler # type: ignore
-from tensorflow.keras.models import Sequential # type: ignore
-from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNormalization # type: ignore
-from tensorflow.keras.callbacks import EarlyStopping # type: ignore
-from tensorflow.keras.optimizers import Adam, RMSprop # type: ignore
-from tensorflow.keras.regularizers import l2 # type: ignore
+# import seaborn as sns
+from sklearn.preprocessing import RobustScaler #type ignore
+from tensorflow.keras.models import Sequential #type ignore
+from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNormalization #type ignore
+from tensorflow.keras.callbacks import EarlyStopping #type ignore
+from tensorflow.keras.optimizers import Adam, RMSprop #type ignore
+from tensorflow.keras.regularizers import l2 #type ignore
 
 import warnings
 warnings.filterwarnings('ignore')
-from .dataPreprocessing import DataPreprocessing
+from DataPreprocess.DataProcessing import DataPreprocessing
 
 class SalesPredictionModel:
-    def __init__(self, data_path, lookback:int=30):
-        self.data_path = data_path
+    def __init__(self, data, lookback:int=30, product_name: str=None):
+        self.data = data
         self.scaler = RobustScaler()
+        self.product_name = product_name
         self.lookback = lookback
         self.model = None
         self.future_predictions = []
 
     def load_data(self):
-        df = pd.read_csv(self.data_path)
-        proc = DataPreprocessing()
-        df_proc = proc.process_data(df)
-
-        X = df_proc.loc[:, ['order date', 'sales']]
+        if self.product_name is not None:
+            self.data = self.data[self.data['product'] == self.product_name]
+        else:
+            self.data = self.data.dropna()
+        X = data.loc[:, ['order date', 'sales']]
         X['order date'] = pd.to_datetime(X['order date'])
         X['order date'] = X['order date'].dt.to_period('D')
         X = X.groupby('order date').sum()
@@ -72,16 +73,16 @@ class SalesPredictionModel:
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
 
-    # def plot_predictions(self, actual, predicted, title):
-    #     plt.figure(figsize=(16, 6))
-    #     plt.plot(actual, label='Actual')
-    #     plt.plot(predicted, label='Predicted')
-    #     plt.ylabel('Sales_Prediction', size=13)
-    #     plt.xlabel('Time Step', size=13)
-    #     plt.tight_layout()
-    #     plt.legend(fontsize=13)
-    #     plt.title(title)
-    #     plt.show()
+    def plot_predictions(self, actual, predicted, title):
+        plt.figure(figsize=(16, 6))
+        plt.plot(actual, label='Actual')
+        plt.plot(predicted, label='Predicted')
+        plt.ylabel('Sales_Prediction', size=13)
+        plt.xlabel('Time Step', size=13)
+        plt.tight_layout()
+        plt.legend(fontsize=13)
+        plt.title(title)
+        plt.show()
 
     def make_future_predictions(self, data, num_predictions=60):
         last_lookback_values = data[-self.lookback:].reshape(1, 1, self.lookback)
@@ -95,23 +96,23 @@ class SalesPredictionModel:
 
         self.future_predictions = self.inverse_transform(np.array(self.future_predictions).reshape(-1, 1))
 
-    # def plot_future_predictions(self, data, num_predictions):
-    #     data_inverse = self.inverse_transform(data)
-    #     combined_data = np.concatenate((data_inverse, self.future_predictions), axis=0)
+    def plot_future_predictions(self, data, num_predictions):
+        data_inverse = self.inverse_transform(data)
+        combined_data = np.concatenate((data_inverse, self.future_predictions), axis=0)
         
-    #     combined_df = pd.DataFrame(combined_data, columns=['Sales_Prediction'])
-    #     x_original = range(len(combined_data))
-    #     x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
+        combined_df = pd.DataFrame(combined_data, columns=['Sales_Prediction'])
+        x_original = range(len(combined_data))
+        x_future = range(len(data_inverse), len(data_inverse) + num_predictions)
 
-    #     # Plot historical sales and future predictions
-    #     plt.figure(figsize=(16, 6))
-    #     plt.plot(x_original, combined_df, label='Historical Sales')
-    #     plt.plot(x_future, self.future_predictions, label='Future Predictions')
-    #     plt.ylabel('Sales Prediction', size=13)
-    #     plt.xlabel('Time Step', size=13)
-    #     plt.tight_layout()
-    #     plt.legend(fontsize=13)
-    #     plt.show()
+        # Plot historical sales and future predictions
+        plt.figure(figsize=(16, 6))
+        plt.plot(x_original, combined_df, label='Historical Sales')
+        plt.plot(x_future, self.future_predictions, label='Future Predictions')
+        plt.ylabel('Sales Prediction', size=13)
+        plt.xlabel('Time Step', size=13)
+        plt.tight_layout()
+        plt.legend(fontsize=13)
+        plt.show()
     
     def future_predictions_to_dict(self):
         return {i: float(pred[0]) for i, pred in enumerate(self.future_predictions)}
@@ -127,13 +128,14 @@ class SalesPredictionModel:
         data_predict = self.inverse_transform(data_predict)
         Y_data = self.inverse_transform([Y_data])
 
-        #self.plot_predictions(Y_data[0], data_predict[:, 0], "Historical Sales Predictions") #Plotting training prediction
+        # self.plot_predictions(Y_data[0], data_predict[:, 0], "Historical Sales Predictions")
 
         self.make_future_predictions(data, num_predictions=num_pred)
-        #self.plot_future_predictions(data, num_predictions=num_pred) #Use for plotting
+        # self.plot_future_predictions(data, num_predictions=num_pred)
 
 if __name__ == "__main__":
-    model = SalesPredictionModel(r'DataPreprocess\data\Sales Data.csv')
+    df = pd.DataFrame
+    model = SalesPredictionModel(df, lookback=7)
     model.run(num_pred=30)
     future_dict = model.future_predictions_to_dict
     print(future_dict)
