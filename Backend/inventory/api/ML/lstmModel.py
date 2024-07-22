@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-# import matplotlib.pyplot as plt
-# import seaborn as sns
+import matplotlib.pyplot as plt
+import seaborn as sns
 from collections import defaultdict
 from sklearn.preprocessing import RobustScaler #type ignore
 from tensorflow.keras.models import Sequential #type ignore
@@ -9,7 +9,6 @@ from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNo
 from tensorflow.keras.callbacks import EarlyStopping #type ignore
 from tensorflow.keras.optimizers import Adam, RMSprop #type ignore
 from tensorflow.keras.regularizers import l2 #type ignore
-from DataPreprocess.DataProcessing import DataPreprocessing
 import warnings
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
@@ -34,13 +33,12 @@ class SalesPredictionModel:
             self.data = self.data[self.data['product'] == self.product_name]
             self.product_price = self.price_of_product(self.data, self.product_name)
         
-        X = self.data.loc[:, ['order date', 'sales']]
-        X['order date'] = pd.to_datetime(X['order date'])
-        X['order date'] = X['order date'].dt.to_period(self.period)
+        X = self.data[['order date', 'sales']].copy()
+        X['order date'] = pd.to_datetime(X['order date']).dt.to_period(self.period)
         X = X.groupby('order date').sum()
 
-        self.data = X.values
-        self.data = self.data.reshape((-1, 1))
+        # self.data = 
+        self.data = X.values.reshape((-1, 1))
         self.data = self.scaler.fit_transform(self.data)
         
         self.last_date = X.index[-1].to_timestamp()
@@ -55,20 +53,18 @@ class SalesPredictionModel:
         return np.array(X), np.array(Y)
 
     def build_model(self, input_shape):
-        model = Sequential()
-        model.add(Bidirectional(LSTM(500, activation='tanh', return_sequences=True, kernel_regularizer=l2(0.1)), input_shape=input_shape))
-        model.add(BatchNormalization())
-        model.add(Dropout(0.5))
-        model.add(Bidirectional(LSTM(250, activation='tanh', kernel_regularizer=l2(0.1))))
-        model.add(BatchNormalization())
-        model.add(Dropout(0.5))
-        model.add(Dense(128, activation='relu', kernel_regularizer=l2(0.1)))
-        model.add(BatchNormalization())
-        model.add(Dense(1, activation='linear'))
-
-        optimizer = Adam(learning_rate=0.0001)
-        model.compile(optimizer=optimizer, loss='mean_squared_error')
-
+        model = Sequential([
+            Bidirectional(LSTM(500, activation='tanh', return_sequences=True, kernel_regularizer=l2(0.1)), input_shape=input_shape),
+            BatchNormalization(),
+            Dropout(0.5),
+            Bidirectional(LSTM(250, activation='tanh', kernel_regularizer=l2(0.1))),
+            BatchNormalization(),
+            Dropout(0.5),
+            Dense(128, activation='relu', kernel_regularizer=l2(0.1)),
+            BatchNormalization(),
+            Dense(1, activation='linear')
+        ])
+        model.compile(optimizer=Adam(learning_rate=0.0001), loss='mean_squared_error')
         return model
 
     def train_model(self, X_train, Y_train):
@@ -164,7 +160,6 @@ class SalesPredictionModel:
         # self.plot_future_predictions(self.data, num_predictions=num_pred)
 
 
-# Use this to visualize
 # if __name__ == "__main__":
 #     df = pd.read_csv(r'DataPreprocess\data\Sales Data.csv')
 #     proc = DataPreprocessing()
