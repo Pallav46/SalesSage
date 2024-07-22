@@ -1,0 +1,14 @@
+# Ignore node modules
+node_modules/
+npm-debug.log
+
+# Ignore build files
+build/
+
+# Ignore local environment variables
+.env
+
+# Ignore IDE/editor files
+.idea/
+.vscode/
+*.swp
