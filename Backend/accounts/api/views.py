@@ -113,8 +113,8 @@ class RegisterCompany(APIView):
         )
 
         sales_collection_name = f"{company_id}_sales"
-        item_collection_name = f"{company_id}_items"
-        db.create_collection(item_collection_name)
+        prediction_collection_name = f"{company_id}_predictions"
+        db.create_collection(prediction_collection_name)
         db.create_collection(sales_collection_name)
 
         user = users_collection.find_one({'company_id': company_id})
