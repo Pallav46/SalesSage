@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from collections import defaultdict
 from sklearn.preprocessing import RobustScaler #type ignore
 from tensorflow.keras.models import Sequential #type ignore
