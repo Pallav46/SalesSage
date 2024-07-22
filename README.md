@@ -62,6 +62,29 @@ cd salesage
 
 ### Setup and Run
 
+#### Environment Variables
+
+The project uses environment variables for configuration. Create a `.env` file in the `backend` directory with the following variables:
+
+```env
+MONGODB_HOST=<your_mongodb_host>
+MONGODB_PORT=<your_mongodb_port>
+MONGODB_NAME=<your_database_name>
+MONGODB_USER=<your_mongodb_username>
+MONGODB_PASSWORD=<your_mongodb_password>
+
+SECRET_KEY=<your_django_secret_key>
+JWT_ALGORITHM=<your_jwt_algorithm>
+
+EMAIL_PORT=<your_email_port>
+EMAIL_HOST_USER=<your_email_host_user>
+EMAIL_HOST_PASSWORD=<your_email_host_password>
+
+RAZORPAY_KEY_ID=<your_razorpay_key_id>
+RAZORPAY_KEY_SECRET=<your_razorpay_key_secret>
+RAZORPAY_WEBHOOK_SECRET=<your_razorpay_webhook_secret>
+```
+
 #### Backend
 
 1. Navigate to the `backend` directory:
