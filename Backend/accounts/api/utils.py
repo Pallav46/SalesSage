@@ -7,6 +7,8 @@ import pytz
 
 import jwt
 
+from pymongo import MongoClient
+
 def generate_otp():
     return str(random.randint(100000, 999999))
 
@@ -42,3 +44,13 @@ def generate_refresh_token(user):
     }
     refresh_token = jwt.encode(refresh_token_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return refresh_token
+
+
+client = MongoClient(settings.CONNECTION_STRING)
+db = client[settings.MONGODB_NAME]
+def data_available(user):
+    salesCollection = db[f"{user['company_id']}_sales"]
+    predictionsCollection = db[f"{user['company_id']}_predictions"]
+
+    # returns (file available, predictions available) 
+    return salesCollection.count_documents({}) > 0, predictionsCollection.count_documents({}) > 0

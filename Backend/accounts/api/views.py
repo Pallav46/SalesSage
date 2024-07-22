@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from pymongo import MongoClient
 
 from accounts.api.authentication import JWTAuthentication
-from .utils import generate_otp, send_otp_email, generate_access_token, generate_refresh_token
+from .utils import generate_otp, send_otp_email, generate_access_token, generate_refresh_token, data_available
 
 client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
@@ -194,6 +194,9 @@ class UserView(APIView):
     def get(self, request):
         user = request.user.__dict__
         fields_to_remove = ['_id', 'password', 'created_at']
+        isFileAvailable, isPredictionsAvailable = data_available(user)
+        user['file_available'] = isFileAvailable
+        user['predictions_available'] = isPredictionsAvailable
         for field in fields_to_remove:
             user.pop(field, None)
         return Response(user, status=status.HTTP_200_OK)
