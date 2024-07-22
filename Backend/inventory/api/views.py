@@ -1,4 +1,5 @@
 import json
+from bson import json_util
 
 import pandas as pd
 
@@ -19,10 +20,12 @@ from accounts.api.authentication import JWTAuthentication
 
 from .ML.lstmModel import SalesPredictionModel
 from .ML.dataPreprocessing import DataPreprocessing
+from .ML.getPredictions import GetPredictions
 
 client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 collection = db['inventory_items']
+IST = pytz.timezone('Asia/Kolkata')
 
 class ItemsView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -76,7 +79,6 @@ class SalesFileView(APIView):
         data_json = data.to_json(orient='records')
 
         # Create a document with a timestamp and the JSON data
-        IST = pytz.timezone('Asia/Kolkata')
         document = {
             "timestamp": datetime.now(IST),
             "filename": file.name
@@ -162,7 +164,7 @@ class SalesListView(APIView):
         except Exception as e:
             return Response({"error": {str(e)}}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-class FuturePredictionView(APIView):
+class CreatePredictionView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -172,7 +174,11 @@ class FuturePredictionView(APIView):
 
         try:
             all_documents = list(salesCollection.find())
-
+            
+            if(not all_documents):
+                return Response({"error": "No sales data found fore prediction"}, status=status.HTTP_404_NOT_FOUND)
+            
+            predictionsCollection = db[f"{request.user.company_id}_predictions"]
             all_data = []
 
             for document in all_documents:
@@ -189,14 +195,42 @@ class FuturePredictionView(APIView):
             df = df.drop_duplicates()
 
             dp = DataPreprocessing()
-            df = dp.process_data(df)
+            df = dp.process_data(df) 
 
-            model = SalesPredictionModel(data=df)
-            model.run()
-            future_predictions = model.future_predictions_to_dict()
+            gp = GetPredictions(df)
+            all_predictions = gp.predictions()
 
-            return Response(future_predictions, status=status.HTTP_200_OK)
+            predictionsCollection.delete_many({})
+
+            prediction_document = {
+                "date": datetime.now(IST),
+                "predictions": all_predictions
+            }
+            predictionsCollection.insert_one(prediction_document)
+
+            return Response({"message": "Prediction stored successfully"}, status=status.HTTP_200_OK)
         
+        except Exception as e:
+            return Response({"error": "behenchod"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ForecastView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        db = settings.DB
+        predictionsCollection = db[f"{request.user.company_id}_predictions"]
+
+        try:
+            latest_prediction = predictionsCollection.find_one(sort=[("date", -1)])
+
+            if not latest_prediction:
+                return Response({"error": "No predictions found"}, status=status.HTTP_404_NOT_FOUND)
+
+            forecast_json = json.loads(json_util.dumps(latest_prediction['predictions']))
+
+            return Response({"forecast": forecast_json}, status=status.HTTP_200_OK)
+
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             

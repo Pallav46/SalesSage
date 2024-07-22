@@ -1,4 +1,4 @@
-from lstmModel import SalesPredictionModel
+from .lstmModel import SalesPredictionModel
 import pandas as pd
 import threading
 
