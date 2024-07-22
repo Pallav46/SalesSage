@@ -5,6 +5,9 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NewChat from "./pages/NewChat";
 import Me from "./pages/Me";
+import SalesReport from "./components/report/SalesReport";
+import SalesTable from "./components/report/SalesTable";
+import MyReport from "./pages/MyReport";
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -15,7 +18,7 @@ function App() {
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen transition-colors duration-300 dark:bg-gray-900 dark:text-white">
+        <div className="">
           <Suspense
             fallback={
               <div className="flex items-center justify-center h-screen">
@@ -26,6 +29,7 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/myreport" element={<MyReport />} />
               <Route path="/chat/new" element={<NewChat />} />
               <Route path="/chat/:id" element={<ChatHistory />} />
               <Route path="/me" element={<Me />} />

@@ -1,14 +1,14 @@
 
-# SalesAge
+# SalesSage
 
-# ![SalesAge Logo](Frontend/public/logo.svg)
+# ![SalesSage Logo](Frontend/public/logo.svg)
 
 ![GitHub issues](https://img.shields.io/github/issues/pallav46/SalesSage)
 ![GitHub stars](https://img.shields.io/github/stars/pallav46/SalesSage)
 ![GitHub forks](https://img.shields.io/github/forks/pallav46/SalesSage)
 ![GitHub license](https://img.shields.io/github/license/pallav46/SalesSage)
 
-SalesAge is a powerful platform for predicting sales data on a daily, weekly, or yearly basis. It provides insightful analytics to help companies make data-driven decisions. The platform offers three subscription plans: one free and two paid options, tailored to different business needs.
+SalesSage is a powerful platform for predicting sales data on a daily, weekly, or yearly basis. It provides insightful analytics to help companies make data-driven decisions. The platform offers three subscription plans: one free and two paid options, tailored to different business needs.
 
 ## Table of Contents
 
@@ -34,8 +34,8 @@ SalesAge is a powerful platform for predicting sales data on a daily, weekly, or
 
 ## Screenshots
 
-Here are some screenshots of the SalesAge platform:
-![SalesAge](screenshots/SalesSage.png)
+Here are some screenshots of the SalesSage platform:
+![SalesSage](screenshots/SalesSage.png)
 *SalesSage landing page*
 
 <!-- ![Dashboard](screenshots/dashboard.png)
@@ -56,8 +56,8 @@ Follow these steps to set up the project locally.
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/pallav46/salesage.git
-cd salesage
+git clone https://github.com/pallav46/SalesSage.git
+cd SalesSage
 ```
 
 ### Setup and Run
@@ -144,7 +144,7 @@ Alternatively, you can use Docker to run both the backend and frontend.
 
 ## API Documentation
 
-Our API allows developers to integrate SalesAge's predictive analytics into their own applications. Below is a brief overview of the available endpoints.
+Our API allows developers to integrate SalesSage's predictive analytics into their own applications. Below is a brief overview of the available endpoints.
 
 ### Endpoints
 
@@ -170,8 +170,8 @@ Please make sure to update tests as appropriate.
 
 1. **Clone the repository**:
     ```bash
-    git clone https://github.com/pallav46/salesage.git
-    cd salesage
+    git clone https://github.com/pallav46/SalesSage.git
+    cd SalesSage
     ```
 
 2. **Backend**:
@@ -207,7 +207,7 @@ Please make sure to update tests as appropriate.
 
 ## Support
 
-For support, please open an issue in the repository or contact us at support@salesage.com.
+For support, please open an issue in the repository or contact us at support@SalesSage.com.
 
 ## Authors
 
