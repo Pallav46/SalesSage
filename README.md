@@ -1,6 +1,8 @@
 
 # SalesAge
 
+# ![SalesAge Logo](\Frontend\public\logo.svg)
+
 ![GitHub issues](https://img.shields.io/github/issues/pallav46/SalesSage)
 ![GitHub stars](https://img.shields.io/github/stars/pallav46/SalesSage)
 ![GitHub forks](https://img.shields.io/github/forks/pallav46/SalesSage)
