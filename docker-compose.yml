@@ -31,3 +31,4 @@ services:
 volumes:
   postgres_data:
   node_modules:
+  redis_data:  # Ensure Redis volume if needed

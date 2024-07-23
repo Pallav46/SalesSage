@@ -1,7 +1,9 @@
-# backend/Dockerfile
-
 # Use the official Python image from the Docker Hub
 FROM python:3.10-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Set the working directory
 WORKDIR /app
@@ -21,5 +23,5 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 8000
 
-# Start the Daphne server
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "SalesSage.asgi:application"]
+# Define the entrypoint script
+ENTRYPOINT ["/app/entrypoint.sh"]
