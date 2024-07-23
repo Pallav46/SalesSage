@@ -11,7 +11,10 @@ import os
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter # type: ignore
 from channels.auth import AuthMiddlewareStack # type: ignore
-from chatBot.websocket import routing
+from chatBot.websocket import routing as chatBot_routing
+from inventory.websocket import routing as training_routing
+
+ws_patterns = chatBot_routing.websocket_urlpatterns + training_routing.websocket_urlpatterns
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'SalesSage.settings')
 
@@ -19,7 +22,7 @@ application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter(
-            routing.websocket_urlpatterns
+            ws_patterns
         )
     ),
 })

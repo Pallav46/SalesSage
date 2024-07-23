@@ -18,9 +18,10 @@ from rest_framework.views import APIView
 
 from accounts.api.authentication import JWTAuthentication
 
-from .ML.lstmModel import SalesPredictionModel
 from .ML.dataPreprocessing import DataPreprocessing
 from .ML.getPredictions import GetPredictions
+
+from inventory.tasks import async_start_training
 
 client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
@@ -42,7 +43,7 @@ class ItemsView(APIView):
         for item in items:
             item['_id'] = str(item['_id'])
         return Response(items, status=status.HTTP_200_OK)
-    
+
 class SalesFileView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -69,18 +70,14 @@ class SalesFileView(APIView):
         if not file or not file.name.endswith('.csv'):
             return Response({"error": "File format not supported. Please upload a CSV file."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Read CSV file into a DataFrame
         try:
             data = pd.read_csv(file)
         except Exception as e:
             return Response({"error": f"Error reading CSV file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Convert DataFrame to JSON
-        data_json = data.to_json(orient='records')
 
-        # Create a document with a timestamp and the JSON data
+        data_json = data.to_json(orient='records')
         document = {
-            "timestamp": datetime.now(IST),
+            "timestamp": datetime.now(),
             "filename": file.name
         }
         try:
@@ -89,43 +86,19 @@ class SalesFileView(APIView):
                 filename=file.name,
                 content_type='application/json'
             )
-            
-            # Add the GridFS file ID to the document
             document["file_id"] = file_id
-
-            # Insert the document into the sales collection
             sales_collection = db[f"{request.user.company_id}_sales"]
-            result = sales_collection.insert_one(document)
+            sales_collection.insert_one(document)
+
+            # Trigger the model training task asynchronously
+            async_start_training.delay(request.user.company_id)
 
             return Response({
-                "message": "File processed and data stored successfully.",
-                "document_id": str(result.inserted_id),
-                "file_id": str(file_id)
+                "message": "File processed and data stored successfully. Model training has begun."
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": f"Error storing data: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    def delete(self, request, file_id, format=None):
-        try:
-            file_id = ObjectId(file_id)
-        except Exception as e:
-            return Response({"error": "Invalid file_id format."}, status=status.HTTP_400_BAD_REQUEST)
-
-        sales_collection = db[f"{request.user.company_id}_sales"]
-
-        file_doc = sales_collection.find_one({"file_id": file_id})
-        if not file_doc:
-            return Response({"error": "File not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        try:
-            settings.FS.delete(file_id)
-            sales_collection.delete_one({"file_id": file_id})
-
-            return Response({"message": "File deleted successfully."}, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
 class SalesListView(APIView):
     authentication_classes = [JWTAuthentication]
