@@ -5,8 +5,9 @@ import Signup from "./Signup";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { startTokenRefresh } from "../../../api/api";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import ForgotPassword from "./ForgotPassword";
 
 const Login = ({ onClose }) => {
   const { isDarkMode } = useTheme();
@@ -15,9 +16,10 @@ const Login = ({ onClose }) => {
   const [passwordError, setPasswordError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false); // Add this state
   const [loginError, setLoginError] = useState("");
 
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
@@ -39,22 +41,24 @@ const Login = ({ onClose }) => {
           company_id: username,
           password,
         });
-  
+
         if (response.status === 200) {
           console.log("Login successful", response.data);
-  
+
           Cookies.set("accessToken", response.data.access_token, { secure: true, sameSite: 'Strict' });
           Cookies.set("refreshToken", response.data.refresh_token, { secure: true, sameSite: 'Strict' });
-  
+
           // Start the token refresh interval
           startTokenRefresh();
-  
+
           // Navigate to the dashboard
           navigate("/dashboard");
-          toast.success("Login Sucessfully")
+          toast.success("Login Successfully")
           onClose(); // Close the login modal
         } else {
-          setLoginError("Login failed. Please check your credentials.");
+          
+            setLoginError("Incorrect Credientials");
+         
         }
       } catch (error) {
         console.error("Login error", error);
@@ -72,7 +76,9 @@ const Login = ({ onClose }) => {
       <div
         className={`w-full max-w-sm z-50 ${isDarkMode ? "dark" : ""}`}
       >
-        {showSignup ? (
+        {showForgotPassword ? (
+          <ForgotPassword onClose={() => setShowForgotPassword(false)} />
+        ) : showSignup ? (
           <Signup onClose={() => setShowSignup(false)} />
         ) : (
           <form
@@ -144,7 +150,6 @@ const Login = ({ onClose }) => {
             >
               Sign In
             </button>
-            <br />
             <p className="text-sm text-center text-white-400 dark:text-gray-300 mt-4">
               New here?{" "}
               <a
@@ -156,6 +161,19 @@ const Login = ({ onClose }) => {
                 }}
               >
                 Register
+              </a>
+            </p>
+            <p className="text-sm text-center text-white-400 dark:text-gray-300 mt-4">
+              Forgot Password?{" "}
+              <a
+                href="#"
+                className="font-bold text-blue-500 hover:text-blue-800 transition duration-300 ease-in-out"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowForgotPassword(true);
+                }}
+              >
+                Click here
               </a>
             </p>
           </form>
