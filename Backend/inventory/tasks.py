@@ -47,7 +47,7 @@ def async_start_training(company_id):
         dp = DataPreprocessing()
         df = dp.process_data(df)
         logger.info("Prediction will start now for company_id: %s", company_id)
-        gp = GetPredictions(df)
+        gp = GetPredictions(df,tier=3)
         all_predictions = gp.predictions()
 
         predictions_collection = db[f"{company_id}_predictions"]

@@ -35,9 +35,9 @@ class PurchaseSubscriptionView(APIView):
             return Response({'error': 'Invalid Tier'}, status=status.HTTP_400_BAD_REQUEST)
 
         if tier == 2:
-            amount = 100
+            amount = 49900
         elif tier == 3:
-            amount = 200
+            amount = 99900
 
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         data = {
