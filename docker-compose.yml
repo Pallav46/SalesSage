@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -14,6 +12,8 @@ services:
       - DEBUG=1
       - DJANGO_ALLOWED_HOSTS=localhost
       - ASGI_THREADS=10
+      - CELERY_BROKER_URL=redis://localhost:6379/0
+      - CELERY_RESULT_BACKEND=redis://localhost:6379/0
 
   frontend:
     build:
@@ -29,5 +29,4 @@ services:
       - backend
 
 volumes:
-  postgres_data:
   node_modules:

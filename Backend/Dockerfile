@@ -1,25 +1,26 @@
-# backend/Dockerfile
+FROM python:3.10
 
-# Use the official Python image from the Docker Hub
-FROM python:3.10-slim
-
-# Set the working directory
 WORKDIR /app
 
-# Copy the requirements file
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libhdf5-dev \
+    pkg-config \
+    redis-server
+
 COPY requirements.txt .
 
-# Install dependencies
+RUN pip install numpy
+RUN pip install h5py --no-binary=h5py
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install daphne celery redis
 
-# Install Daphne for ASGI support
-RUN pip install daphne
-
-# Copy the entire backend code
 COPY . .
 
-# Expose the port the app runs on
 EXPOSE 8000
 
-# Start the Daphne server
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "SalesSage.asgi:application"]
+COPY start.sh .
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]

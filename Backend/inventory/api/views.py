@@ -64,6 +64,27 @@ class SalesFileView(APIView):
             })
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+    def delete(self, request, file_id, format=None):
+        try:
+            file_id = ObjectId(file_id)
+        except Exception as e:
+            return Response({"error": "Invalid file_id format."}, status=status.HTTP_400_BAD_REQUEST)
+
+        sales_collection = db[f"{request.user.company_id}_sales"]
+
+        file_doc = sales_collection.find_one({"file_id": file_id})
+        if not file_doc:
+            return Response({"error": "File not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            settings.FS.delete(file_id)
+            sales_collection.delete_one({"file_id": file_id})
+
+            return Response({"message": "File deleted successfully."}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request, format=None):
         file = request.FILES.get('file')
