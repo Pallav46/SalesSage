@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-
 from datetime import datetime, timedelta
 
 from rest_framework import status
@@ -9,13 +8,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import pytz
-import razorpay #type: ignore
+import razorpay
 from pymongo import MongoClient
 
 from django.conf import settings
+from django.shortcuts import redirect
 
 from accounts.api.authentication import JWTAuthentication
-
 from inventory.tasks import async_start_training
 
 client = MongoClient(settings.CONNECTION_STRING)
@@ -23,6 +22,7 @@ db = client[settings.MONGODB_NAME]
 users_collection = db['company_user']
 payments_collection = db['user_payments']
 IST = pytz.timezone('Asia/Kolkata')
+
 class PurchaseSubscriptionView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -31,9 +31,9 @@ class PurchaseSubscriptionView(APIView):
         user = request.user
         tier = request.data.get('tier')
 
-        if not tier or tier not in [2,3]:
+        if not tier or tier not in [2, 3]:
             return Response({'error': 'Invalid Tier'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if tier == 2:
             amount = 100
         elif tier == 3:
@@ -92,7 +92,7 @@ class PaymentCallbackView(APIView):
             users_collection.update_one(
                 {'company_id': company_id},
                 {'$set': {
-                    'tier': tier,
+                    'tier': int(tier),
                     'expiry_date': datetime.now(IST) + timedelta(weeks=24)
                 }}
             )
@@ -103,12 +103,8 @@ class PaymentCallbackView(APIView):
             for field in fields_to_remove:
                 user.pop(field, None)
 
-            async_start_training.delay(request.user.company_id)
+            async_start_training.delay(company_id)
 
-            return Response({
-                'message': 'Payment verified and saved successfully.',
-                'reference_id': razorpay_payment_id,
-                'user': user
-            }, status=status.HTTP_200_OK)
-        
+            return redirect(f'http://localhost:5173/me')
+
         return Response({'error': 'Invalid signature'}, status=status.HTTP_400_BAD_REQUEST)
