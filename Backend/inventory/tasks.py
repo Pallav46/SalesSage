@@ -1,4 +1,6 @@
 import json
+from bson import json_util
+from django.core.cache import cache
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from datetime import datetime
@@ -55,6 +57,10 @@ def async_start_training(company_id):
             "predictions": all_predictions
         }
         predictions_collection.insert_one(prediction_document)
+
+        cache_key = f"forecast_{company_id}"
+        forecast_json = json.loads(json_util.dumps(all_predictions))
+        cache.set(cache_key, json.dumps(forecast_json), timeout=3600)
 
         async_to_sync(channel_layer.group_send)(
             f'training_status_{company_id}',

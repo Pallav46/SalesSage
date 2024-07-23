@@ -7,6 +7,7 @@ from datetime import datetime
 import pytz
 
 from django.conf import settings
+from django.core.cache import cache
 
 from pymongo import MongoClient
 from bson import ObjectId
@@ -194,6 +195,12 @@ class ForecastView(APIView):
         db = settings.DB
         predictionsCollection = db[f"{request.user.company_id}_predictions"]
 
+        cache_key = f"forecast_{request.user.company_id}"
+        cached_forecast = cache.get(cache_key)
+
+        if cached_forecast:
+            return Response({"forecast": json.loads(cached_forecast)}, status=status.HTTP_200_OK)
+
         try:
             latest_prediction = predictionsCollection.find_one(sort=[("date", -1)])
 
@@ -201,6 +208,7 @@ class ForecastView(APIView):
                 return Response({"error": "No predictions found"}, status=status.HTTP_404_NOT_FOUND)
 
             forecast_json = json.loads(json_util.dumps(latest_prediction['predictions']))
+            cache.set(cache_key, json.dumps(forecast_json), timeout=3600)  # Cache timeout in seconds (e.g., 3600 seconds = 1 hour)
 
             return Response({"forecast": forecast_json}, status=status.HTTP_200_OK)
 
