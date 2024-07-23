@@ -13,6 +13,7 @@ const SalesTable = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -54,9 +55,10 @@ const SalesTable = () => {
       sortOrder,
       page: page.toString(),
       rowsPerPage: rowsPerPage.toString(),
+      searchQuery, // Include search query in URL params
     });
     navigate(`?${params.toString()}`, { replace: true });
-  }, [filter, sortColumn, sortOrder, page, rowsPerPage, navigate]);
+  }, [filter, sortColumn, sortOrder, page, rowsPerPage, searchQuery, navigate]);
 
   const handleFilterChange = (e) => {
     setFilter(e.target.value);
@@ -82,7 +84,12 @@ const SalesTable = () => {
     setPage(1);
   };
 
-  // Flatten and sort data
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  // Flatten, filter, and sort data
   const filteredData = forecast.flatMap((item) => {
     const filterData = item.predictions[filter] || [];
     return Object.entries(filterData).map(([date, [sales, quantity]]) => ({
@@ -91,7 +98,9 @@ const SalesTable = () => {
       quantity,
       productName: item.product,
     }));
-  });
+  }).filter(item => 
+    item.productName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const sortedData = filteredData.sort((a, b) => {
     const compareValue = sortOrder === "asc" ? 1 : -1;
@@ -122,32 +131,47 @@ const SalesTable = () => {
   return (
     <div className="text-white p-6 rounded-lg shadow-xl max-w-6xl mx-auto border-2 bg-[#08081d] bg-opacity-80 backdrop-blur-0 border-[#fff] border-2">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 text-sm">
-        <div className="mb-4 sm:mb-0">
-          <label htmlFor="filter" className="mr-2 text-[#00D4FF] font-semibold">Filter:</label>
-          <select
-            id="filter"
-            value={filter}
-            onChange={handleFilterChange}
-            className="bg-[#090979] text-white p-2 rounded-md border border-[#00D4FF] focus:outline-none focus:ring-2 focus:ring-[#00D4FF]"
-          >
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="rowsPerPage" className="mr-2 text-[#00D4FF] font-semibold">Rows:</label>
-          <select
-            id="rowsPerPage"
-            value={rowsPerPage}
-            onChange={handleRowsPerPageChange}
-            className="bg-[#090979] text-white p-2 rounded-md border border-[#00D4FF] focus:outline-none focus:ring-2 focus:ring-[#00D4FF]"
-          >
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-          </select>
+        <div className="flex flex-col sm:flex-row justify-between items-center w-full">
+          <div className="flex flex-col sm:flex-row">
+            <div className="mb-4 sm:mb-0 sm:mr-4">
+              <label htmlFor="filter" className="mr-2 text-[#00D4FF] font-semibold">Filter:</label>
+              <select
+                id="filter"
+                value={filter}
+                onChange={handleFilterChange}
+                className="bg-[#090979] text-white p-2 rounded-md border border-[#00D4FF] focus:outline-none focus:ring-2 focus:ring-[#00D4FF]"
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+            <div className="mb-4 sm:mb-0">
+              <label htmlFor="rowsPerPage" className="mr-2 text-[#00D4FF] font-semibold">Rows:</label>
+              <select
+                id="rowsPerPage"
+                value={rowsPerPage}
+                onChange={handleRowsPerPageChange}
+                className="bg-[#090979] text-white p-2 rounded-md border border-[#00D4FF] focus:outline-none focus:ring-2 focus:ring-[#00D4FF]"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+          <div className="mb-4 sm:mb-0 sm:ml-auto">
+            <label htmlFor="search" className="mr-2 text-[#00D4FF] font-semibold">Search:</label>
+            <input
+              type="text"
+              id="search"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="bg-[#090979] text-white p-2 rounded-md border border-[#00D4FF] focus:outline-none focus:ring-2 focus:ring-[#00D4FF]"
+              placeholder="Search product..."
+            />
+          </div>
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -181,7 +205,7 @@ const SalesTable = () => {
         </table>
       </div>
       <div className="mt-6 flex flex-col sm:flex-row justify-between items-center text-sm">
-        <div className="mb-4 sm:mb-0 text-[#00D4FF]">
+        <div className="mb-4 sm:mb-0">
           Showing {((page - 1) * rowsPerPage) + 1} - {Math.min(page * rowsPerPage, sortedData.length)} of {sortedData.length}
         </div>
         <div className="flex items-center">
