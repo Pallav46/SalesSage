@@ -89,7 +89,9 @@ const Dashboard = () => {
       <div className="flex flex-col flex-grow bg-gradient-to-r from-color-300 via-color-400 to-color-300 text-white">
         <header className="flex items-center justify-between p-4">
           <div className="flex items-center">
-            <div className="text-2xl font-bold text-[#00D4FF]">SalesSage</div>
+            <a href="/" className="text-2xl font-bold text-[#00D4FF] hover:text-[#00D4FF]">
+              SalesSage
+            </a>
           </div>
           <DropdownMenu />
         </header>

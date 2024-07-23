@@ -8,6 +8,11 @@ import {
 import classNames from "classnames";
 import { useTheme } from "../../ThemeContext";
 import axios from "axios";
+import Cookies from "js-cookie";
+import { startTokenRefresh } from "../../../api/api";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+
 
 const Signup = ({ onClose }) => {
   const { isDarkMode } = useTheme();
@@ -38,6 +43,8 @@ const Signup = ({ onClose }) => {
       otpRefs.current[index + 1].focus();
     }
   };
+
+  const navigate = useNavigate();
 
   const handleNext = () => {
     if (step === 1) {
@@ -95,10 +102,21 @@ const Signup = ({ onClose }) => {
       })
       .then((response) => {
         if (response.status === 201) {
-          console.log(response.data.message);
-          setRegisterError(""); // Clear previous error
+          console.log("Login successful", response.data);
+
+          Cookies.set("accessToken", response.data.access_token, { secure: true, sameSite: 'Strict' });
+          Cookies.set("refreshToken", response.data.refresh_token, { secure: true, sameSite: 'Strict' });
+
+          // Start the token refresh interval
+          startTokenRefresh();
+
+          // Navigate to the dashboard
+          navigate("/dashboard");
+          toast.success("SignUp Successfully")
+          onClose(); // Close the login modal
         } else {
-          setRegisterError(response.data.error);
+            setRegisterError("Incorrect Credientials");
+         
         }
       })
       .catch((error) => {
