@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SendOTP, VerifyOTP, CompanyIDAvailable, RegisterCompany, LoginView, LogoutView, RefreshTokenView, UserView
+from .views import SendOTP, VerifyOTP, CompanyIDAvailable, RegisterCompany, LoginView, LogoutView, RefreshTokenView, UserView, ForgetPasswordView, ForgetPasswordOTPVerification
 
 urlpatterns = [
     path('send-otp/',SendOTP.as_view(), name='send-otp'),
@@ -10,4 +10,6 @@ urlpatterns = [
     path('logout/',LogoutView.as_view(), name='logout'),
     path('refresh-token/',RefreshTokenView.as_view(), name='refresh-token'),
     path('me/',UserView.as_view(), name='my-details'),
+    path('forget-password/',ForgetPasswordView.as_view(), name='forget-password'),
+    path('forget-password-otp/',ForgetPasswordOTPVerification.as_view(), name='forget-password-otp'),
 ]

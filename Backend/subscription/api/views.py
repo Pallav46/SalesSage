@@ -16,6 +16,8 @@ from django.conf import settings
 
 from accounts.api.authentication import JWTAuthentication
 
+from inventory.tasks import async_start_training
+
 client = MongoClient(settings.CONNECTION_STRING)
 db = client[settings.MONGODB_NAME]
 users_collection = db['company_user']
@@ -100,6 +102,8 @@ class PaymentCallbackView(APIView):
             fields_to_remove = ['_id', 'password', 'email', 'created_at']
             for field in fields_to_remove:
                 user.pop(field, None)
+
+            async_start_training.delay(request.user.company_id)
 
             return Response({
                 'message': 'Payment verified and saved successfully.',

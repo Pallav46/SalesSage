@@ -200,3 +200,64 @@ class UserView(APIView):
         for field in fields_to_remove:
             user.pop(field, None)
         return Response(user, status=status.HTTP_200_OK)
+    
+    def patch(self, request):
+        data = request.data
+        company_id = request.user.company_id
+        user = users_collection.find_one({'company_id': company_id})
+        if check_password(data.get('old_password'), user['password']):
+            if len(data.get('new_password')) < 8 or not any(char in '!@#$%^&*()_+' for char in data.get('new_password')):
+                return Response({"error": "Password should be at least 8 characters long including special characters"}, status=status.HTTP_400_BAD_REQUEST)
+            users_collection.update_one(
+                {'company_id': user['company_id']},
+                {'$set': {'password': make_password(data.get('new_password'))}}
+            )
+            return Response({"message": "Password changed successfully"}, status=status.HTTP_200_OK)
+        return Response({"error": "Invalid password"}, status=status.HTTP_400_BAD_REQUEST)
+    
+class ForgetPasswordView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        user = users_collection.find_one({'email': email})
+        if user:
+            otp = generate_otp()
+            expiry_time = datetime.now() + timedelta(minutes=5)
+            otp_collection.insert_one({
+                'email': email,
+                'otp': otp,
+                'expiry_time': expiry_time
+            })
+            try:
+                send_otp_email(email, otp,"Reset Password", "You have requested to reset your password")
+            except:
+                otp_collection.delete_one({'email': email})
+                return Response({"error": "Failed to send OTP"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            return Response({"message": "OTP sent successfully"}, status=status.HTTP_200_OK)
+        
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    def patch(self, request):
+        email = request.data.get('email')
+        new_password = request.data.get('new_password')
+
+        if len(new_password) < 8 or not any(char in '!@#$%^&*()_+' for char in new_password):
+            return Response({"error": "Password should be at least 8 characters long including special characters"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            users_collection.update_one(
+                {'email': email},
+                {'$set': {'password': make_password(new_password)}}
+            )
+            return Response({"message": "Password changed successfully"}, status=status.HTTP_200_OK)
+
+class ForgetPasswordOTPVerification(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        otp_entered = request.data.get('otp')
+
+        otp_record = otp_collection.find_one({'email': email, 'otp': otp_entered})
+
+        if otp_record and otp_record['expiry_time'] > datetime.now():
+            otp_collection.delete_one({'email': email, 'otp': otp_entered})
+            return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
+        
+        return Response({"error": "Invalid OTP or OTP expired"}, status=status.HTTP_400_BAD_REQUEST)

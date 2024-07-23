@@ -14,10 +14,10 @@ def generate_otp():
 
 SENDER_EMAIL = settings.EMAIL_HOST_USER
 
-def send_otp_email(email, otp):
+def send_otp_email(email, otp, subject, message):
     send_mail(
-        "Welcome to SalesSage",
-        f"To get started, here is your OTP: {otp}",
+        subject,
+        f"{message}, here is your OTP: {otp}",
         SENDER_EMAIL,
         [email],
         fail_silently=False,
