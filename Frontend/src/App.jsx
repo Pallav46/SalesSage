@@ -8,8 +8,8 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 // Import components with lazy loading
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const ChatHistory = lazy(() => import('./pages/ChatHistory'));
-const NewChat = lazy(() => import('./pages/NewChat'));
+// const ChatHistory = lazy(() => import('./pages/ChatHistory'));
+// const NewChat = lazy(() => import('./pages/NewChat'));
 const Me = lazy(() => import('./pages/Me'));
 const SalesReport = lazy(() => import('./components/report/SalesReport'));
 const SalesTable = lazy(() => import('./components/report/SalesTable'));

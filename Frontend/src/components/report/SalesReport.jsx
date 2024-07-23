@@ -114,7 +114,7 @@ const SalesReport = () => {
   };
 
   const handleViewInDetails = () => {
-    navigate("/mylist");
+    navigate("/myreport");
   };
 
   const handleFileChange = (event) => {
