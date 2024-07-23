@@ -1,14 +1,15 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import RobustScaler #type ignore
-from tensorflow.keras.models import Sequential #type ignore
-from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNormalization #type ignore
-from tensorflow.keras.callbacks import EarlyStopping #type ignore
-from tensorflow.keras.optimizers import Adam, RMSprop #type ignore
-from tensorflow.keras.regularizers import l2 #type ignore
+from collections import defaultdict
+from sklearn.preprocessing import RobustScaler #type: ignore
+from tensorflow.keras.models import Sequential #type: ignore
+from tensorflow.keras.layers import Dense, Dropout, LSTM, Bidirectional, BatchNormalization #type: ignore
+from tensorflow.keras.callbacks import EarlyStopping #type: ignore
+from tensorflow.keras.optimizers import Adam, RMSprop #type: ignore
+from tensorflow.keras.regularizers import l2 #type: ignore
 import warnings
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 warnings.filterwarnings('ignore')
 
@@ -67,7 +68,7 @@ class SalesPredictionModel:
     def train_model(self, X_train, Y_train):
         self.model = self.build_model((X_train.shape[1], X_train.shape[2]))
         early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
-        self.model.fit(X_train, Y_train, validation_split=0.2, epochs=200, batch_size=32, callbacks=[early_stopping], verbose=1)
+        self.model.fit(X_train, Y_train, validation_split=0.2, epochs=3, batch_size=32, callbacks=[early_stopping], verbose=1)
 
     def predict(self, X):
         return self.model.predict(X)
@@ -124,13 +125,16 @@ class SalesPredictionModel:
         Y_data = self.inverse_transform([Y_data])
 
         # self.plot_predictions(Y_data[0], data_predict[:, 0], "Historical Sales Predictions")
-        
-        if self.period == 'D':
-            num_pred_period = num_pred
-        elif self.period == 'W':
-            num_pred_period = num_pred // 7
-        elif self.period == 'M':
-            num_pred_period = num_pred // 10
 
-        self.make_future_predictions(self.data, num_predictions=num_pred_period)
+        self.make_future_predictions(self.data, num_predictions=num_pred)
         # self.plot_future_predictions(self.data, num_predictions=num_pred)
+
+
+# if __name__ == "__main__":
+#     df = pd.read_csv(r'DataPreprocess\data\Sales Data.csv')
+#     proc = DataPreprocessing()
+#     df_proc = proc.process_data(df)
+#     model = SalesPredictionModel(df_proc, lookback=60, product_name="Macbook Pro Laptop")
+#     model.run(num_pred=30)
+#     future_dict = model.future_predictions_to_dict()
+#     print(future_dict)
