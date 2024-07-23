@@ -64,7 +64,7 @@ class SalesFileView(APIView):
             })
 
         return Response(response_data, status=status.HTTP_200_OK)
-
+    
     def delete(self, request, file_id, format=None):
         try:
             file_id = ObjectId(file_id)

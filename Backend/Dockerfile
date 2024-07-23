@@ -1,27 +1,26 @@
-# Use the official Python image from the Docker Hub
-FROM python:3.10-slim
+FROM python:3.10
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Set the working directory
 WORKDIR /app
 
-# Copy the requirements file
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libhdf5-dev \
+    pkg-config \
+    redis-server
+
 COPY requirements.txt .
 
-# Install dependencies
+RUN pip install numpy
+RUN pip install h5py --no-binary=h5py
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install daphne celery redis
 
-# Install Daphne for ASGI support
-RUN pip install daphne
-
-# Copy the entire backend code
 COPY . .
 
-# Expose the port the app runs on
 EXPOSE 8000
 
-# Define the entrypoint script
-ENTRYPOINT ["/app/entrypoint.sh"]
+COPY start.sh .
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]
