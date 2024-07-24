@@ -16,8 +16,8 @@ const SalesReport = () => {
   const [graphType, setGraphType] = useState("bar");
   const [sortedData, setSortedData] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [sortOrder, setSortOrder] = useState("asc");
   const [file, setFile] = useState(null);
+  const [predictionType, setPredictionType] = useState("sales");
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef(null);
@@ -67,9 +67,9 @@ const SalesReport = () => {
     const searchParams = new URLSearchParams(location.search);
     const urlFilter = searchParams.get("filter") || "daily";
     const urlGraphType = searchParams.get("graphType") || "bar";
-    const urlSortOrder = searchParams.get("sortOrder") || "asc";
+    const urlPredictionType = searchParams.get("predictionType") || "sales";
 
-    if (["daily", "weekly", "monthly", "yearly"].includes(urlFilter)) {
+    if (["daily", "weekly", "monthly"].includes(urlFilter)) {
       setFilter(urlFilter);
     }
 
@@ -77,18 +77,18 @@ const SalesReport = () => {
       setGraphType(urlGraphType);
     }
 
-    if (["asc", "desc"].includes(urlSortOrder)) {
-      setSortOrder(urlSortOrder);
+    if (["sales", "quantity"].includes(urlPredictionType)) {
+      setPredictionType(urlPredictionType);
     }
   }, [location.search]);
 
   useEffect(() => {
-    updateURL(filter, graphType, sortOrder);
-  }, [filter, graphType, sortOrder]);
+    updateURL(filter, graphType, predictionType);
+  }, [filter, graphType, predictionType]);
 
-  const updateURL = (newFilter, newGraphType, newSortOrder) => {
+  const updateURL = (newFilter, newGraphType, newPredictionType) => {
     navigate(
-      `?filter=${newFilter}&graphType=${newGraphType}&sortOrder=${newSortOrder}`,
+      `?filter=${newFilter}&graphType=${newGraphType}&predictionType=${newPredictionType}`,
       { replace: true }
     );
   };
@@ -101,8 +101,8 @@ const SalesReport = () => {
     setGraphType(newGraphType);
   };
 
-  const handleSortOrderChange = (newSortOrder) => {
-    setSortOrder(newSortOrder);
+  const handlePredictionTypeChange = (newPredictionType) => {
+    setPredictionType(newPredictionType);
   };
 
   const handleProductToggle = (product) => {
@@ -151,6 +151,7 @@ const SalesReport = () => {
       setLoading(false);
     }
   };
+
 
   const weekNames = [
     "Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "Week 7", "Week 8",
@@ -219,7 +220,18 @@ const SalesReport = () => {
         type: graphType,
         height: 350,
         zoom: { enabled: true },
-        toolbar: { show: true },
+        toolbar: { show: true ,
+          tools: {
+            download: true,
+            selection: true,
+            zoom: true,
+            zoomin: true,
+            zoomout: true,
+            pan: true,
+            reset: true
+          },
+          autoSelected: 'zoom'
+        },
         animations: {
           enabled: true,
           easing: 'easeinout',
@@ -259,7 +271,7 @@ const SalesReport = () => {
         },
       },
       yaxis: {
-        title: { text: "Sales" },
+        title: { text: predictionType === "sales" ? "Sales" : "Quantity" },
         labels: {
           formatter: (value) => value.toFixed(2),
           style: {
@@ -307,16 +319,12 @@ const SalesReport = () => {
           name: product.product,
           data: (sortedData || []).map((date) =>
             product.predictions[filter] && product.predictions[filter][date]
-              ? product.predictions[filter][date][0]
+              ? product.predictions[filter][date][predictionType === "sales" ? 0 : 1]
               : 0
           ),
-        }))
-        .sort((a, b) => {
-          const sumA = a.data.reduce((sum, value) => sum + value, 0);
-          const sumB = b.data.reduce((sum, value) => sum + value, 0);
-          return sortOrder === "asc" ? sumA - sumB : sumB - sumA;
-        }) || [],
+        })) || [],
   };
+
 
   if (loading)
     return (
@@ -337,7 +345,7 @@ const SalesReport = () => {
       </div>
     );
 
-  return (
+   return (
     <div className="text-white mt-0">
       <div className="max-w-5xl max-h-[80vh] mx-auto backdrop-blur-sm rounded-lg shadow-lg p-4">
         <h1 className="text-2xl font-bold text-center text-white mb-4">
@@ -420,7 +428,7 @@ const SalesReport = () => {
           </div>
 
           <div className="w-full lg:w-64 bg-[#020024]/80 rounded-lg shadow p-3 border-2 border-white">
-            <div className="flex flex-row gap-3 mb-4">
+            <div className="flex flex-col gap-3 mb-4">
               <div>
                 <h2 className="text-xl font-semibold text-[#00D4FF] mb-2">
                   Time Filter
@@ -433,7 +441,6 @@ const SalesReport = () => {
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
                 </select>
               </div>
 
@@ -454,15 +461,15 @@ const SalesReport = () => {
 
               <div>
                 <h2 className="text-xl font-semibold text-[#00D4FF] mb-2">
-                  Sort Quantity
+                  Prediction Type
                 </h2>
                 <select
-                  value={sortOrder}
-                  onChange={(e) => handleSortOrderChange(e.target.value)}
+                  value={predictionType}
+                  onChange={(e) => handlePredictionTypeChange(e.target.value)}
                   className="w-full p-2 rounded border border-[#00D4FF] bg-[#090979] text-white text-sm focus:outline-none focus:border-[#00D4FF] focus:ring focus:ring-[#00D4FF] transition"
                 >
-                  <option value="asc">Low to High</option>
-                  <option value="desc">High to Low</option>
+                  <option value="sales">Sales</option>
+                  <option value="quantity">Quantity</option>
                 </select>
               </div>
             </div>

@@ -13,7 +13,6 @@ import { startTokenRefresh } from "../../../api/api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-
 const Signup = ({ onClose }) => {
   const { isDarkMode } = useTheme();
   const [step, setStep] = useState(1);
@@ -34,6 +33,8 @@ const Signup = ({ onClose }) => {
   const [registerError, setRegisterError] = useState("");
   const [companyIdError, setCompanyIdError] = useState("");
 
+  const navigate = useNavigate();
+
   const handleOtpChange = (index, value) => {
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1);
@@ -44,84 +45,70 @@ const Signup = ({ onClose }) => {
     }
   };
 
-  const navigate = useNavigate();
-
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1) {
-      axios
-        .post("http://127.0.0.1:8000/accounts/send-otp/", { email })
-        .then(() => {
-          startTimer();
-          setStep(step + 1);
-          setEmailError(""); // Clear previous error
-        })
-        .catch((error) => {
-          setEmailError(error.response.data.error);
-        });
+      try {
+        await axios.post("http://127.0.0.1:8000/accounts/send-otp/", { email });
+        startTimer();
+        setStep(step + 1);
+        setEmailError("");
+      } catch (error) {
+        setEmailError(error.response?.data?.error || "Error sending OTP");
+      }
     } else {
       setStep(step + 1);
     }
   };
 
-  const verifyOtp = () => {
+  const verifyOtp = async () => {
     const otpCode = otp.join("");
-    axios
-      .post("http://127.0.0.1:8000/accounts/verify-otp/", {
+    try {
+      const response = await axios.post("http://127.0.0.1:8000/accounts/verify-otp/", {
         email,
         otp: otpCode,
-      })
-      .then((response) => {
-        if (response.status === 201) {
-          setStep(step + 1);
-          setOtpError(""); // Clear previous error
-        } else {
-          setOtpError(response.data.message);
-        }
-      })
-      .catch((error) => {
-        setOtpError("Error verifying OTP");
       });
+      if (response.status === 201) {
+        setStep(step + 1);
+        setOtpError("");
+      } else {
+        setOtpError(response.data.message);
+      }
+    } catch (error) {
+      setOtpError("Error verifying OTP");
+    }
   };
 
   const handlePrevious = () => {
     setStep(step - 1);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setRegisterError("Passwords do not match");
       return;
     }
-    axios
-      .post("http://127.0.0.1:8000/accounts/register/", {
+    try {
+      const response = await axios.post("http://127.0.0.1:8000/accounts/register/", {
         email,
         company_name: companyName,
         company_id: companyId,
         password,
-      })
-      .then((response) => {
-        if (response.status === 201) {
-          console.log("Login successful", response.data);
-
-          Cookies.set("accessToken", response.data.access_token, { secure: true, sameSite: 'Strict' });
-          Cookies.set("refreshToken", response.data.refresh_token, { secure: true, sameSite: 'Strict' });
-
-          // Start the token refresh interval
-          startTokenRefresh();
-
-          // Navigate to the dashboard
-          navigate("/dashboard");
-          toast.success("SignUp Successfully")
-          onClose(); // Close the login modal
-        } else {
-            setRegisterError("Incorrect Credientials");
-         
-        }
-      })
-      .catch((error) => {
-        setRegisterError("Error registering");
       });
+      if (response.status === 201) {
+        console.log("Registration successful", response.data);
+        Cookies.set("accessToken", response.data.access_token, { secure: true, sameSite: 'Strict' });
+        Cookies.set("refreshToken", response.data.refresh_token, { secure: true, sameSite: 'Strict' });
+        startTokenRefresh();
+        navigate("/dashboard");
+        toast.success("Signup Successful");
+        onClose();
+      } else {
+        setRegisterError("Incorrect Credentials");
+      }
+    } catch (error) {
+      setRegisterError(error.response?.data?.error || "Error registering");
+    }
   };
 
   const startTimer = () => {
@@ -139,39 +126,34 @@ const Signup = ({ onClose }) => {
     }, 1000);
   };
 
-  const handleResendOtp = () => {
-    startTimer();
-    axios
-      .post("http://127.0.0.1:8000/accounts/send-otp/", { email })
-      .then(() => {
-        startTimer();
-      })
-      .catch((error) => {
-        setOtpError("Error resending OTP");
-      });
+  const handleResendOtp = async () => {
+    try {
+      await axios.post("http://127.0.0.1:8000/accounts/send-otp/", { email });
+      startTimer();
+    } catch (error) {
+      setOtpError("Error resending OTP");
+    }
   };
 
-  const checkUsernameAvailability = (companyId) => {
-    axios
-      .get(`http://127.0.0.1:8000/accounts/id-available?company_id=${companyId}`)
-      .then((response) => {
-        if (response.status === 200 && response.data.available) {
-          setUsernameAvailable(true);
-          setCompanyIdError(""); // Clear previous error
-        } else {
-          setUsernameAvailable(false);
-          setCompanyIdError(response.data.message);
-        }
-      })
-      .catch((error) => {
+  const checkUsernameAvailability = async (companyId) => {
+    try {
+      const response = await axios.get(`http://127.0.0.1:8000/accounts/id-available/?company_id=${companyId}`);
+      if (response.status === 200) {
+        setUsernameAvailable(true);
+        setCompanyIdError("");
+      } else {
         setUsernameAvailable(false);
-        setCompanyIdError("Error checking company ID availability");
-      });
+        setCompanyIdError(response.data.message);
+      }
+    } catch (error) {
+      setUsernameAvailable(false);
+      setCompanyIdError("Username unavilable");
+    }
   };
 
   const handleCompanyIdChange = (e) => {
     setCompanyId(e.target.value);
-    setUsernameAvailable(null); // Trigger spinner
+    setUsernameAvailable(null);
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
@@ -188,12 +170,28 @@ const Signup = ({ onClose }) => {
     };
   }, []);
 
+  const renderInputField = (id, type, placeholder, value, onChange, error) => (
+    <div className="mb-4">
+      <input
+        className={classNames(
+          "shadow appearance-none border rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500",
+          {
+            "text-gray-700 dark:text-gray-300 dark:bg-gray-600": isDarkMode,
+            "text-gray-700": !isDarkMode,
+          }
+        )}
+        id={id}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
+      {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+    </div>
+  );
+
   return (
-    <div
-      className={`fixed inset-0 flex items-center justify-center ${
-        isDarkMode ? "dark" : ""
-      }`}
-    >
+    <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? "dark" : ""}`}>
       <div className={`w-full max-w-sm ${isDarkMode ? "dark" : ""}`}>
         <form
           className={classNames(
@@ -237,23 +235,7 @@ const Signup = ({ onClose }) => {
             </div>
             {step === 1 && (
               <div>
-                <input
-                  className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500",
-                    {
-                      "text-gray-700": !isDarkMode,
-                      "text-gray-300 dark:bg-gray-600": isDarkMode,
-                    }
-                  )}
-                  id="email"
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                {emailError && (
-                  <p className="text-red-500 text-xs mt-2">{emailError}</p>
-                )}
+                {renderInputField("email", "email", "Email", email, (e) => setEmail(e.target.value), emailError)}
                 <button
                   className="bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out mt-4"
                   type="button"
@@ -284,9 +266,7 @@ const Signup = ({ onClose }) => {
                     />
                   ))}
                 </div>
-                {otpError && (
-                  <p className="text-red-500 text-xs mt-2">{otpError}</p>
-                )}
+                {otpError && <p className="text-red-500 text-xs mt-2">{otpError}</p>}
                 <div className="flex justify-between">
                   <button
                     className="bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
@@ -305,8 +285,7 @@ const Signup = ({ onClose }) => {
                 </div>
                 <div className="flex justify-center items-center mt-4">
                   <p className="text-sm">
-                    Resend OTP in{" "}
-                    <span className="font-semibold">{timer}</span> seconds
+                    Resend OTP in <span className="font-semibold">{timer}</span> seconds
                   </p>
                 </div>
                 {resendEnabled && (
@@ -324,88 +303,22 @@ const Signup = ({ onClose }) => {
             )}
             {step === 3 && (
               <div>
-                <input
-                  className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4",
-                    {
-                      "text-gray-700": !isDarkMode,
-                      "text-gray-300 dark:bg-gray-600": isDarkMode,
-                    }
-                  )}
-                  id="companyName"
-                  type="text"
-                  placeholder="Company Name"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                />
+                {renderInputField("companyName", "text", "Company Name", companyName, (e) => setCompanyName(e.target.value))}
                 <div className="relative">
-                  <input
-                    className={classNames(
-                      "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4",
-                      {
-                        "text-gray-700": !isDarkMode,
-                        "text-gray-300 dark:bg-gray-600": isDarkMode,
-                      }
-                    )}
-                    id="companyId"
-                    type="text"
-                    placeholder="Company ID"
-                    value={companyId}
-                    onChange={handleCompanyIdChange}
-                  />
+                  {renderInputField("companyId", "text", "Company ID", companyId, handleCompanyIdChange, companyIdError)}
                   {usernameAvailable === null && (
-                    <FaSpinner
-                      className="absolute right-3 top-3 text-gray-500 animate-spin"
-                      size={20}
-                    />
+                    <FaSpinner className="absolute right-3 top-3 text-gray-500 animate-spin" size={20} />
                   )}
                   {usernameAvailable === true && (
-                    <FaCheckCircle
-                      className="absolute right-3 top-3 text-green-500"
-                      size={20}
-                    />
+                    <FaCheckCircle className="absolute right-3 top-3 text-green-500" size={20} />
                   )}
                   {usernameAvailable === false && (
-                    <FaTimesCircle
-                      className="absolute right-3 top-3 text-red-500"
-                      size={20}
-                    />
+                    <FaTimesCircle className="absolute right-3 top-3 text-red-500" size={20} />
                   )}
                 </div>
-                {companyIdError && (
-                  <p className="text-red-500 text-xs mt-2">{companyIdError}</p>
-                )}
-                <input
-                  className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4",
-                    {
-                      "text-gray-700": !isDarkMode,
-                      "text-gray-300 dark:bg-gray-600": isDarkMode,
-                    }
-                  )}
-                  id="password"
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <input
-                  className={classNames(
-                    "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 dark:text-gray-300 dark:bg-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4",
-                    {
-                      "text-gray-700": !isDarkMode,
-                      "text-gray-300 dark:bg-gray-600": isDarkMode,
-                    }
-                  )}
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-                {registerError && (
-                  <p className="text-red-500 text-xs mt-2">{registerError}</p>
-                )}
+                {renderInputField("password", "password", "Password", password, (e) => setPassword(e.target.value))}
+                {renderInputField("confirmPassword", "password", "Confirm Password", confirmPassword, (e) => setConfirmPassword(e.target.value))}
+                {registerError && <p className="text-red-500 text-xs mt-2">{registerError}</p>}
                 <div className="flex justify-between">
                   <button
                     className="bg-color-300 hover:bg-white hover:text-color-300 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"

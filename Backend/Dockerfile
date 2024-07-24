@@ -1,17 +1,26 @@
-# Use a base image, e.g., Python or Node.js depending on your setup
-FROM python:3.9
+FROM python:3.10
 
-# Set the working directory
 WORKDIR /app
 
-# Copy all files from the local directory to the working directory in the container
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libhdf5-dev \
+    pkg-config \
+    redis-server
+
+COPY requirements.txt .
+
+RUN pip install numpy
+RUN pip install h5py --no-binary=h5py
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install daphne celery redis
+
 COPY . .
 
-# Install dependencies
-RUN pip install -r requirements.txt
+EXPOSE 8000
 
-# Ensure start.sh is executable
+COPY start.sh .
 RUN chmod +x start.sh
 
-# Specify the command to run your script
-CMD ["start.sh"]
+CMD ["./start.sh"]
