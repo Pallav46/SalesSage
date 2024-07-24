@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import { ThemeProvider } from './ThemeContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useAuthContext } from "./context/AuthContext";
 
 // Import components with lazy loading
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -16,36 +16,31 @@ const SalesTable = lazy(() => import('./components/report/SalesTable'));
 const MyReport = lazy(() => import('./pages/MyReport'));
 
 function AppRoutes() {
-  const { authUser } = useAuth();
-
-  if (authUser.loading) {
-    // Show a loading state while data is being fetched
-    return <div>Loading...</div>;
-  }
+  const { authUser } = useAuthContext();
 
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route 
         path="/dashboard" 
-        element={authUser.companyId ? <Dashboard /> : <Navigate to="/" />} 
+        element={authUser ? <Dashboard company_id={authUser.company_id}/> : <Navigate to="/" />} 
       />
      
       <Route 
         path="/me" 
-        element={authUser.companyId ? <Me /> : <Navigate to="/" />} 
+        element={authUser ? <Me /> : <Navigate to="/" />} 
       />
       <Route 
         path="/salesreport" 
-        element={authUser.companyId ? <SalesReport /> : <Navigate to="/" />} 
+        element={authUser ? <SalesReport /> : <Navigate to="/" />} 
       />
       <Route 
         path="/salestable" 
-        element={authUser.companyId ? <SalesTable /> : <Navigate to="/" />} 
+        element={authUser ? <SalesTable /> : <Navigate to="/" />} 
       />
       <Route 
         path="/myreport" 
-        element={authUser.companyId ? <MyReport /> : <Navigate to="/" />} 
+        element={authUser ? <MyReport /> : <Navigate to="/" />} 
       />
     </Routes>
   );
@@ -55,11 +50,9 @@ function App() {
   return (
     <Router>
       <ThemeProvider>
-        <AuthProvider>
           <Suspense fallback={<div>Loading...</div>}>
             <AppRoutes />
           </Suspense>
-        </AuthProvider>
       </ThemeProvider>
       <ToastContainer />
     </Router>

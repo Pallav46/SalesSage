@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import axios
 import { toast } from 'react-toastify'; // Import toast
 import Cookies from "js-cookie";
+import { useAuthContext } from '../../context/AuthContext';
 
 
 const DropdownMenu = () => {
@@ -13,6 +14,8 @@ const DropdownMenu = () => {
   const handleMouseEnter = () => {
     setIsDropdownOpen(true);
   };
+
+  const {setAuthUser} = useAuthContext()
 
   const handleMouseLeave = () => {
     if (!isDropdownOpen) {
@@ -44,7 +47,8 @@ const DropdownMenu = () => {
       // Clear cookies or local storage as needed
       Cookies.remove('accessToken');
       Cookies.remove('refreshToken');
-      
+      localStorage.removeItem("user");
+			setAuthUser(null);
       // Navigate to home page
       navigate('/');
       

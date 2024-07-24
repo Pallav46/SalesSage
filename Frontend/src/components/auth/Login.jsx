@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useTheme } from "../../ThemeContext";
 import { FaTimes } from "react-icons/fa";
 import Signup from "./Signup";
-import axios from "axios";
-import Cookies from "js-cookie";
-import { startTokenRefresh } from "../../../api/api";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import ForgotPassword from "./ForgotPassword";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../context/AuthContext";
+import { startTokenRefresh} from "../../../api/api";
+import Cookies from "js-cookie";
 
 const Login = ({ onClose }) => {
   const { isDarkMode } = useTheme();
@@ -16,10 +16,12 @@ const Login = ({ onClose }) => {
   const [passwordError, setPasswordError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false); // Add this state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { setAuthUser } = useAuthContext();
 
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
@@ -35,34 +37,50 @@ const Login = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginError(""); // Reset error state before attempting login
+  
     if (username && password && !passwordError) {
+      setLoading(true);
       try {
-        const response = await axios.post("http://127.0.0.1:8000/accounts/login/", {
+        const response = await axios.post("http://localhost:8000/accounts/login/", {
           company_id: username,
-          password,
+          password
         });
 
-        if (response.status === 200) {
-          console.log("Login successful", response.data);
+        // If the request is successful (status code 2xx)
+        const data = response.data;
+        
+        // Store user data in localStorage
+        localStorage.setItem("user", JSON.stringify(data.user));
 
-          Cookies.set("accessToken", response.data.access_token, { secure: true, sameSite: 'Strict' });
-          Cookies.set("refreshToken", response.data.refresh_token, { secure: true, sameSite: 'Strict' });
+        // Context
+        setAuthUser(data.user);
 
-          // Start the token refresh interval
-          startTokenRefresh();
+        // Store tokens in cookies with expiration
+        Cookies.set("accessToken", data.access_token);
+        Cookies.set("refreshToken", data.refresh_token);
 
-          // Navigate to the dashboard
-          navigate("/dashboard");
-          toast.success("Login Successfully")
-          onClose(); // Close the login modal
-        } else {
-          
-            setLoginError("Incorrect Credientials");
-         
-        }
+        startTokenRefresh();
+        navigate("/dashboard");
       } catch (error) {
         console.error("Login error", error);
-        setLoginError("An error occurred during login. Please try again.");
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          if (error.response.status === 401) {
+            setLoginError("Incorrect username or password.");
+          } else {
+            setLoginError("An error occurred. Please try again.");
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          setLoginError("No response from server. Please try again.");
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          setLoginError("An error occurred. Please try again.");
+        }
+      } finally {
+        setLoading(false);
       }
     } else {
       setLoginError("Please fill in all fields correctly.");
@@ -73,9 +91,7 @@ const Login = ({ onClose }) => {
     <div
       className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? "dark" : ""}`}
     >
-      <div
-        className={`w-full max-w-sm z-50 ${isDarkMode ? "dark" : ""}`}
-      >
+      <div className={`w-full max-w-sm z-50 ${isDarkMode ? "dark" : ""}`}>
         {showForgotPassword ? (
           <ForgotPassword onClose={() => setShowForgotPassword(false)} />
         ) : showSignup ? (
@@ -89,7 +105,7 @@ const Login = ({ onClose }) => {
           >
             <button
               type="button"
-              onClick={onClose} // Close the modal when the cross button is clicked
+              onClick={onClose}
               className="absolute top-2 right-2 text-white-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-gray-100"
             >
               <FaTimes size={20} />
@@ -147,8 +163,9 @@ const Login = ({ onClose }) => {
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
               type="submit"
+              disabled={loading}
             >
-              Sign In
+              {loading ? "Signing In..." : "Sign In"}
             </button>
             <p className="text-sm text-center text-white-400 dark:text-gray-300 mt-4">
               New here?{" "}

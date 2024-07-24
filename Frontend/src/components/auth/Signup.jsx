@@ -12,6 +12,8 @@ import Cookies from "js-cookie";
 import { startTokenRefresh } from "../../../api/api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../context/AuthContext"; // Add this import
+
 
 const Signup = ({ onClose }) => {
   const { isDarkMode } = useTheme();
@@ -33,7 +35,10 @@ const Signup = ({ onClose }) => {
   const [registerError, setRegisterError] = useState("");
   const [companyIdError, setCompanyIdError] = useState("");
 
+
   const navigate = useNavigate();
+  const { setAuthUser } = useAuthContext(); // Add this line
+
 
   const handleOtpChange = (index, value) => {
     const newOtp = [...otp];
@@ -93,21 +98,30 @@ const Signup = ({ onClose }) => {
         email,
         company_name: companyName,
         company_id: companyId,
-        password,
+        password
       });
+
       if (response.status === 201) {
         console.log("Registration successful", response.data);
         Cookies.set("accessToken", response.data.access_token, { secure: true, sameSite: 'Strict' });
         Cookies.set("refreshToken", response.data.refresh_token, { secure: true, sameSite: 'Strict' });
+        
+        // Store user data in localStorage
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+
+        // Update auth context
+        setAuthUser(response.data.user);
+
         startTokenRefresh();
         navigate("/dashboard");
         toast.success("Signup Successful");
         onClose();
       } else {
-        setRegisterError("Incorrect Credentials");
+        setRegisterError("Unexpected response from server");
       }
     } catch (error) {
-      setRegisterError(error.response?.data?.error || "Error registering");
+      console.error("Signup error:", error);
+      setRegisterError(error.response?.data?.error || "Error registering. Please try again.");
     }
   };
 
