@@ -28,25 +28,22 @@ const TeamMember = ({ name, role, linkedin, twitter, github }) => (
 const Team = () => {
   const team = [
     {
-      name: 'Pallav',
+      name: 'Pallav Kumar',
       role: 'Frontend Developer',
-      linkedin: 'https://www.linkedin.com/in/pallav',
-      twitter: 'https://twitter.com/pallav',
-      github: 'https://github.com/pallav',
+      linkedin: 'https://www.linkedin.com/in/pallav-kumar-990435258/',
+      github: 'https://github.com/Pallav46',
     },
     {
-      name: 'Ishaan',
+      name: 'Ishaan Das',
       role: 'Backend Developer',
-      linkedin: 'https://www.linkedin.com/in/ishaan',
-      twitter: 'https://twitter.com/ishaan',
-      github: 'https://github.com/ishaan',
+      linkedin: 'https://www.linkedin.com/in/ishaan-das-2813b6200/',
+      github: 'https://github.com/ishaan19d',
     },
     {
-      name: 'Ubaid',
+      name: 'Ubaid Abbas',
       role: 'AI & ML Specialist',
-      linkedin: 'https://www.linkedin.com/in/ubaid',
-      twitter: 'https://twitter.com/ubaid',
-      github: 'https://github.com/ubaid',
+      linkedin: 'https://www.linkedin.com/in/ubaid-abbas/',
+      github: 'https://github.com/ubaid2751',
     },
   ];
 
@@ -59,7 +56,7 @@ const Team = () => {
         <h2 className="text-5xl font-bold mb-16 text-center text-white">
           Meet Our Team
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12 fles justify-center align-middle text-center">
           {team.map((member, index) => (
             <TeamMember key={index} {...member} />
           ))}

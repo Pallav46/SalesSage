@@ -5,20 +5,20 @@ import axios from "axios";
 const plans = [
   {
     type: "Free",
-    price: "$0/month",
+    price: "₹ 0/month",
     features: ["Basic access", "Limited storage", "Email support"],
     tier: 1
   },
   {
-    type: "Pro",
-    price: "$15/month",
-    features: ["Full access", "Unlimited storage", "Priority support", "Advanced analytics"],
+    type: "Plus",
+    price: "₹ 499/month",
+    features: ["Full access", "Unlimited storage", "Priority support"],
     tier: 2
   },
   {
-    type: "Enterprise",
-    price: "Custom",
-    features: ["All Pro features", "Dedicated account manager", "Custom integrations", "SLA guarantee"],
+    type: "Prime",
+    price: "₹ 999/month",
+    features: ["Dedicated account manager", "Custom integrations", , "Advanced analytics"],
     tier: 3
   }
 ];
