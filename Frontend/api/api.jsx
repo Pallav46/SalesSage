@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { AuthContext } from '../src/context/AuthContext';
 
 let refreshInterval;
 const REFRESH_INTERVAL = 1 * 1000 * 60 * 60 * 2.9; // 30 seconds in milliseconds
@@ -9,6 +10,7 @@ export const startTokenRefresh = () => {
   refreshToken();
   refreshInterval = setInterval(refreshToken, REFRESH_INTERVAL);
 };
+
 
 const refreshToken = async () => {
   try {
@@ -62,6 +64,7 @@ const handleTokenExpiration = () => {
   stopTokenRefresh();
   Cookies.remove('accessToken');
   Cookies.remove('refreshToken');
+
 };
 
 // Add this function to check for token expiration on API calls

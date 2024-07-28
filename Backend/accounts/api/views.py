@@ -45,7 +45,7 @@ class SendOTP(APIView):
                 'expiry_time': expiry_time
             })
         try:
-            send_otp_email(email, otp)
+            send_otp_email(email, otp, "welcome to SalesSage", "hii")
         except:
             otp_collection.delete_one({'email': email})
             return Response({"error": "Failed to send OTP"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)

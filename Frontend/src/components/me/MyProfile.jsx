@@ -74,7 +74,7 @@ const MyProfile = () => {
               <span className="font-medium text-sky-500">Tier:</span> <span className="text-white">{user ? `Tier ${user.tier}` : 'N/A'}</span>
             </p>
             <p className="text-sky-400">
-              <span className="font-medium text-sky-500">Expiry:</span> <span className="text-white">{user ? new Date(user.expiry_date).toLocaleDateString() : 'N/A'}</span>
+              <span className="font-medium text-sky-500">Expiry:</span> <span className="text-white">{user.tier != 1 ? new Date(user.expiry_date).toLocaleDateString() : 'N/A'}</span>
             </p>
           </div>
 
